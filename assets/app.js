@@ -1,6 +1,6 @@
 /* =====================================================================
    app.js — واجهة المقياس: سؤال واحد في كل شاشة، خريطة رحلة، حفظ، نتائج
-   البنود تُقرأ من data/items.json، والحساب كله في engine.js
+   البنود تقرأ من data/items.json، والحساب كله في engine.js
    ===================================================================== */
 (function () {
   'use strict';
@@ -76,7 +76,7 @@
     $('btn-next').addEventListener('click', function () { renderQuestion(); show('screen-quiz'); });
 
     fetch('data/items.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (b) { S.bank = b; })
-      .catch(function () { $('btn-start').disabled = true; $('btn-start').textContent = 'تعذّر تحميل الأسئلة، أعد/ي تحميل الصفحة'; });
+      .catch(function () { $('btn-start').disabled = true; $('btn-start').textContent = 'تعذر تحميل الأسئلة، أعد/ي تحميل الصفحة'; });
 
     flushQueue();
     setInterval(flushQueue, 20000);
@@ -104,7 +104,7 @@
     $('wrap-track').hidden = gr.stage !== 'secondary';
     if (!S.fixedSchool) fillSchools(gr.stage);
   }
-  /* المدرسة تظهر بعد اختيار الصف، وتُعرض مدارس المرحلة فقط */
+  /* المدرسة تظهر بعد اختيار الصف، وتعرض مدارس المرحلة فقط */
   function fillSchools(stage) {
     var box = $('f-school');
     var cur = picked(box);
@@ -177,7 +177,7 @@
     $('q-station').textContent = st.station.title;
     $('q-count').textContent = ar(S.qi + 1) + ' من ' + ar(n);
     $('q-bar').style.width = Math.round(S.qi / n * 100) + '%';
-    $('q-meta').textContent = ''; // تسميات البنود الداخلية لا تُعرض للطالبة
+    $('q-meta').textContent = ''; // تسميات البنود الداخلية لا تعرض للطالبة
     $('q-text').textContent = txt(it);
     var prev = it._followup ? S.fu[it.id] : S.responses[it.id];
     $('q-options').innerHTML = '';
@@ -221,13 +221,13 @@
     if (!next) { finish(); return; }
     drawJourney();
     $('b-medal').innerHTML = medal(done.id);
-    $('b-done').textContent = g('أنهيت «', 'أنهيتِ «') + shortTitle(done) + '»';
+    $('b-done').textContent = g('أنهيت «', 'أنهيت «') + shortTitle(done) + '»';
     $('b-title').textContent = next.station.title;
     $('b-intro').textContent = intro(next.station);
     show('screen-break');
   }
 
-  /* أسئلة المتابعة تُفتح بعد محطات القياس وقبل المحطة الوصفية */
+  /* أسئلة المتابعة تفتح بعد محطات القياس وقبل المحطة الوصفية */
   function maybeInsertFollowups() {
     if (S.fuDone) return;
     var next = S.queue[S.si];
@@ -291,7 +291,7 @@
   function setStatus(kind) {
     var el = $('save-status');
     if (!CFG.ENDPOINT) { el.innerHTML = '<span class="status wait">وضع المعاينة: الحفظ غير مربوط بعد</span>'; return; }
-    var m = { ok: ['ok', 'تم حفظ إجاباتك'], wait: ['wait', 'جارٍ حفظ إجاباتك…'], err: ['err', 'لم يكتمل الحفظ بعد، وسيُعاد تلقائياً. الرجاء إبقاء الصفحة مفتوحة.'] }[kind];
+    var m = { ok: ['ok', 'تم حفظ إجاباتك'], wait: ['wait', 'جار حفظ إجاباتك…'], err: ['err', 'لم يكتمل الحفظ بعد، وسيعاد تلقائيا. الرجاء إبقاء الصفحة مفتوحة.'] }[kind];
     el.innerHTML = '<span class="status ' + m[0] + '">' + m[1] + '</span>';
   }
 
@@ -318,7 +318,7 @@
   function counselor() { return g('المرشد الطلابي', 'المرشدة الطلابية'); }
   function serviceText(level) {
     return {
-      self: g('تستطيع المتابعة بنفسك: ابحث في التخصصات التي تهمك، وارجع إلى ', 'تستطيعين المتابعة بنفسك: ابحثي في التخصصات التي تهمك، وارجعي إلى ') + counselor() + g(' متى احتجت.', ' متى احتجتِ.'),
+      self: g('تستطيع المتابعة بنفسك: ابحث في التخصصات التي تهمك، وارجع إلى ', 'تستطيعين المتابعة بنفسك: ابحثي في التخصصات التي تهمك، وارجعي إلى ') + counselor() + g(' متى احتجت.', ' متى احتجت.'),
       brief: 'لقاء قصير أو ورشة مع ' + counselor() + ' يكفي ليوضح لك الصورة.',
       brief_group: 'برنامج جماعي مع ' + counselor() + ' يساعدك على بناء قرارك خطوة خطوة.',
       individual: 'لقاء فردي مع ' + counselor() + ' هو الأنسب لك الآن.'
@@ -354,8 +354,8 @@
 
   function renderResults(r, diagnoses, service) {
     var first = S.user.name.split(/\s+/)[0];
-    $('r-hello').textContent = g('أحسنت يا ', 'أحسنتِ يا ') + first;
-    $('r-lead').textContent = 'هذه صورة لوضعك اليوم، وتتغير كلما ' + g('عرفت', 'عرفتِ') + ' أكثر. ' + g('اعرضها على ', 'اعرضيها على ') + counselor() + g(' ليساعدك', ' لتساعدك') + ' في خطوتك التالية.';
+    $('r-hello').textContent = g('أحسنت يا ', 'أحسنت يا ') + first;
+    $('r-lead').textContent = 'هذه صورة لوضعك اليوم، وتتغير كلما ' + g('عرفت', 'عرفت') + ' أكثر. ' + g('اعرضها على ', 'اعرضيها على ') + counselor() + g(' ليساعدك', ' لتساعدك') + ' في خطوتك التالية.';
 
     var cap = r.capability;
     var score = cap.score == null ? 0 : Math.round(cap.score);

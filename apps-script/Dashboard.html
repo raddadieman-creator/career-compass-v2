@@ -47,7 +47,7 @@ tr:hover td{background:#f7fbfa;cursor:pointer}
 </head>
 <body>
 <h1>لوحة مقياس جاهزية القرار المهني</h1>
-<div class="sub" id="sub">جارٍ تحميل البيانات…</div>
+<div class="sub" id="sub">جار تحميل البيانات…</div>
 
 <div class="filters">
   <label>المدرسة<select id="f-school"></select></label>
@@ -77,13 +77,13 @@ tr:hover td{background:#f7fbfa;cursor:pointer}
 <div class="panel">
   <h2 id="t-title">الطالبات</h2>
   <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-  <p class="note">اضغطي على أي صف لعرض تقرير الطالبة وطباعته. «منخفض الجودة» يعني: فشل سؤال التركيز، أو إجابات متطابقة تقريباً، أو سرعة غير طبيعية.</p>
+  <p class="note">اضغطي على أي صف لعرض تقرير الطالبة وطباعته. «منخفض الجودة» يعني: فشل سؤال التركيز، أو إجابات متطابقة تقريبا، أو سرعة غير طبيعية.</p>
 </div>
 
 <div id="detail"><div class="box" id="d-box"></div></div>
 
 <script>
-var META = {"facets": [{"id": "self_knowledge", "label": "معرفة الذات", "dimension": "capability"}, {"id": "options_knowledge", "label": "معرفة الخيارات الدراسية والمهنية", "dimension": "capability"}, {"id": "labor_market", "label": "معرفة سوق العمل", "dimension": "capability"}, {"id": "decision_skills", "label": "مهارات القرار والتخطيط", "dimension": "capability"}, {"id": "readiness", "label": "الاستعداد والثقة بالقرار", "dimension": "capability"}, {"id": "decision_source", "label": "مصدر القرار", "dimension": "complexity"}, {"id": "family_fit", "label": "التوافق مع الأسرة", "dimension": "complexity"}, {"id": "prestige", "label": "أثر الشيوع والمكانة", "dimension": "complexity"}, {"id": "constraints", "label": "القيود الخارجية", "dimension": "complexity"}], "diagnoses": {"self_info": {"label": "نقص المعلومات عن الذات", "recommendation": "أنشطة استكشاف ذاتي مع جلسة تفسير قصيرة", "serviceHint": "brief"}, "occ_info": {"label": "نقص المعلومات عن المهن", "recommendation": "ورشة استكشاف التخصصات والمهن، ولقاءات مع مهنيين", "serviceHint": "brief"}, "ways_info": {"label": "نقص المعلومات عن طرق الحصول عليها", "recommendation": "تعريف بمصادر المعلومات الموثوقة وكيفية البحث", "serviceHint": "self"}, "unreliable": {"label": "معلومات غير موثوقة أو متضاربة", "recommendation": "جلسة لتقييم المعلومات وفرزها مع المرشد", "serviceHint": "brief"}, "process_info": {"label": "نقص المعلومات عن عملية القرار", "recommendation": "برنامج جماعي في مهارات اتخاذ القرار", "serviceHint": "brief"}, "motivation": {"label": "عدم الاستعداد: ضعف الدافعية", "recommendation": "جلسة قصيرة لربط القرار بأهداف الطالب القريبة", "serviceHint": "brief"}, "indecisive": {"label": "عدم الاستعداد: التردد العام", "recommendation": "إرشاد فردي", "serviceHint": "individual"}, "beliefs": {"label": "عدم الاستعداد: معتقدات غير وظيفية", "recommendation": "جلسات جماعية لمناقشة المعتقدات حول القرار المهني", "serviceHint": "brief"}, "dependence": {"label": "الاعتماد على الآخرين في القرار", "recommendation": "تدريب على مهارات القرار الذاتي مع إشراك الأسرة", "serviceHint": "brief"}, "external_conflict": {"label": "تعارض خارجي مع الأسرة", "recommendation": "جلسة إرشادية بحضور ولي الأمر", "serviceHint": "individual"}, "shared_ok": {"label": "قرار مشترك متوافق مع الأسرة", "recommendation": "لا يحتاج تدخلاً خاصاً", "serviceHint": "self"}, "internal_conflict": {"label": "تعارض داخلي بين الرغبة والمكانة", "recommendation": "جلسة توضيح القيم والأولويات", "serviceHint": "brief"}, "constraints": {"label": "قيود خارجية (المعدل، المكان، الظروف)", "recommendation": "إرشاد فردي وبدائل واقعية", "serviceHint": "individual"}, "none": {"label": "لا توجد صعوبة واضحة", "recommendation": "لا يحتاج تدخلاً خاصاً", "serviceHint": "self"}}, "services": {"self": "خدمة ذاتية", "brief": "خدمة موجزة بمساعدة المرشد", "brief_group": "خدمة موجزة جماعية", "individual": "إدارة حالة فردية"}};
+var META = {"facets": [{"id": "self_knowledge", "label": "معرفة الذات", "dimension": "capability"}, {"id": "options_knowledge", "label": "معرفة الخيارات الدراسية والمهنية", "dimension": "capability"}, {"id": "labor_market", "label": "معرفة سوق العمل", "dimension": "capability"}, {"id": "decision_skills", "label": "مهارات القرار والتخطيط", "dimension": "capability"}, {"id": "readiness", "label": "الاستعداد والثقة بالقرار", "dimension": "capability"}, {"id": "decision_source", "label": "مصدر القرار", "dimension": "complexity"}, {"id": "family_fit", "label": "التوافق مع الأسرة", "dimension": "complexity"}, {"id": "prestige", "label": "أثر الشيوع والمكانة", "dimension": "complexity"}, {"id": "constraints", "label": "القيود الخارجية", "dimension": "complexity"}], "diagnoses": {"self_info": {"label": "نقص المعلومات عن الذات", "recommendation": "أنشطة استكشاف ذاتي مع جلسة تفسير قصيرة", "serviceHint": "brief"}, "occ_info": {"label": "نقص المعلومات عن المهن", "recommendation": "ورشة استكشاف التخصصات والمهن، ولقاءات مع مهنيين", "serviceHint": "brief"}, "ways_info": {"label": "نقص المعلومات عن طرق الحصول عليها", "recommendation": "تعريف بمصادر المعلومات الموثوقة وكيفية البحث", "serviceHint": "self"}, "unreliable": {"label": "معلومات غير موثوقة أو متضاربة", "recommendation": "جلسة لتقييم المعلومات وفرزها مع المرشد", "serviceHint": "brief"}, "process_info": {"label": "نقص المعلومات عن عملية القرار", "recommendation": "برنامج جماعي في مهارات اتخاذ القرار", "serviceHint": "brief"}, "motivation": {"label": "عدم الاستعداد: ضعف الدافعية", "recommendation": "جلسة قصيرة لربط القرار بأهداف الطالب القريبة", "serviceHint": "brief"}, "indecisive": {"label": "عدم الاستعداد: التردد العام", "recommendation": "إرشاد فردي", "serviceHint": "individual"}, "beliefs": {"label": "عدم الاستعداد: معتقدات غير وظيفية", "recommendation": "جلسات جماعية لمناقشة المعتقدات حول القرار المهني", "serviceHint": "brief"}, "dependence": {"label": "الاعتماد على الآخرين في القرار", "recommendation": "تدريب على مهارات القرار الذاتي مع إشراك الأسرة", "serviceHint": "brief"}, "external_conflict": {"label": "تعارض خارجي مع الأسرة", "recommendation": "جلسة إرشادية بحضور ولي الأمر", "serviceHint": "individual"}, "shared_ok": {"label": "قرار مشترك متوافق مع الأسرة", "recommendation": "لا يحتاج تدخلا خاصا", "serviceHint": "self"}, "internal_conflict": {"label": "تعارض داخلي بين الرغبة والمكانة", "recommendation": "جلسة توضيح القيم والأولويات", "serviceHint": "brief"}, "constraints": {"label": "قيود خارجية (المعدل، المكان، الظروف)", "recommendation": "إرشاد فردي وبدائل واقعية", "serviceHint": "individual"}, "none": {"label": "لا توجد صعوبة واضحة", "recommendation": "لا يحتاج تدخلا خاصا", "serviceHint": "self"}}, "services": {"self": "خدمة ذاتية", "brief": "خدمة موجزة بمساعدة المرشد", "brief_group": "خدمة موجزة جماعية", "individual": "إدارة حالة فردية"}};
 var STAGE = { intermediate: 'المتوسطة', secondary: 'الثانوية' };
 var LV = { high: 'مرتفعة', medium: 'متوسطة', low: 'تحتاج تطوير' };
 var SV = META.services;
@@ -97,7 +97,7 @@ function num(v) { return v === '' || v == null || isNaN(Number(v)) ? null : Numb
 function lowQuality(r) { return String(r.attention_pass) === '0' || String(r.straightline) === '1' || String(r.fast) === '1'; }
 
 function load() {
-  $('sub').textContent = 'جارٍ تحميل البيانات…';
+  $('sub').textContent = 'جار تحميل البيانات…';
   google.script.run.withSuccessHandler(function (d) {
     RAW = d.rows.map(function (row) { var o = {}; d.header.forEach(function (h, i) { o[h] = row[i]; }); return o; });
     RAW.forEach(function (r) { r._latest = true; });
@@ -107,7 +107,7 @@ function load() {
     fillFilters();
     apply();
     $('sub').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-SA') + ' · إجمالي السجلات في الملف: ' + RAW.length;
-  }).withFailureHandler(function (e) { $('sub').textContent = 'تعذّر تحميل البيانات: ' + e.message; }).getData();
+  }).withFailureHandler(function (e) { $('sub').textContent = 'تعذر تحميل البيانات: ' + e.message; }).getData();
 }
 
 function opts(sel, values, labels) {
@@ -158,7 +158,7 @@ function kpis() {
     card('جاهزية متوسطة', pct(lv.medium, n), lv.medium + ' طالبة') +
     card('تحتاج تطوير', pct(lv.low, n), lv.low + ' طالبة') +
     card('إدارة حالة فردية', ind, 'تحتاج متابعة فردية') +
-    card('منخفضة الجودة', lq, 'تُراجَع قبل التحليل');
+    card('منخفضة الجودة', lq, 'تراجع قبل التحليل');
 }
 
 function chart(id, type, labels, datasets, extra) {
@@ -220,12 +220,12 @@ function detail(id) {
   $('d-box').innerHTML =
     '<h1>' + esc(r.name) + '</h1><div class="sub">' + esc(r.school) + ' · ' + esc(r.grade) + (r.track ? ' · ' + esc(r.track) : '') + ' · ' + esc(String(r.received_at).slice(0, 10)) + ' · المحاولة ' + esc(r.attempt) + '</div>' +
     '<div class="kpis"><div class="kpi"><div class="l">الجاهزية</div><div class="v">' + (num(r.cap_score) == null ? '—' : Math.round(num(r.cap_score)) + '%') + '</div><div class="s">' + esc(LV[r.cap_level] || '') + '</div></div>' +
-    '<div class="kpi"><div class="l">مستوى الخدمة</div><div class="v" style="font-size:16px">' + esc(SV[r.service_level] || '') + '</div><div class="s">' + esc([String(r.service_raised) === '1' ? 'رُفع بناءً على أسئلة المتابعة' : '', r.service_basis === 'capability_only' ? 'مرجعيات القرار غير مقيسة' : ''].filter(Boolean).join(' · ')) + '</div></div>' +
+    '<div class="kpi"><div class="l">مستوى الخدمة</div><div class="v" style="font-size:16px">' + esc(SV[r.service_level] || '') + '</div><div class="s">' + esc([String(r.service_raised) === '1' ? 'رفع بناء على أسئلة المتابعة' : '', r.service_basis === 'capability_only' ? 'مرجعيات القرار غير مقيسة' : ''].filter(Boolean).join(' · ')) + '</div></div>' +
     '<div class="kpi"><div class="l">رمز هولاند</div><div class="v">' + esc(r.holland_code) + '</div><div class="s">الاتساق: ' + esc({ high: 'مرتفع', medium: 'متوسط', low: 'منخفض' }[r.holland_consistency] || '') + '</div></div></div>' +
     '<h2 style="font-size:14px;margin:8px 0">الجوانب</h2>' + facets.map(function (f) { return bar(f.label, num(r['facet_' + f.id])); }).join('') +
-    '<h2 style="font-size:14px;margin:12px 0 4px">التشخيص والتدخل المقترح</h2>' + (diags.length ? diags.map(function (c) { var d = META.diagnoses[c]; return '<div class="diag"><b>' + esc(d.label) + '</b><br>' + esc(d.recommendation) + '</div>'; }).join('') : '<p class="note">لم تُفتح أسئلة متابعة لهذه الطالبة.</p>') +
+    '<h2 style="font-size:14px;margin:12px 0 4px">التشخيص والتدخل المقترح</h2>' + (diags.length ? diags.map(function (c) { var d = META.diagnoses[c]; return '<div class="diag"><b>' + esc(d.label) + '</b><br>' + esc(d.recommendation) + '</div>'; }).join('') : '<p class="note">لم تفتح أسئلة متابعة لهذه الطالبة.</p>') +
     '<p class="note">الجودة: سؤال التركيز ' + (String(r.attention_pass) === '1' ? 'صحيح' : String(r.attention_pass) === '0' ? 'خاطئ' : '—') + ' · إجابات متطابقة: ' + (String(r.straightline) === '1' ? 'نعم' : 'لا') + ' · المدة: ' + esc(r.duration_sec) + ' ثانية</p>' +
-    '<p class="note">الحدود المستخدمة مؤقتة إلى أن تُشتق من بيانات العينة. التشخيص يُناقش مع الطالبة، ولا يُعد حكماً نهائياً.</p>' +
+    '<p class="note">الحدود المستخدمة مؤقتة إلى أن تشتق من بيانات العينة. التشخيص يناقش مع الطالبة، ولا يعد حكما نهائيا.</p>' +
     '<div id="d-actions" style="margin-top:12px;display:flex;gap:8px"><button class="btn primary" onclick="window.print()">طباعة التقرير</button><button class="btn" onclick="document.getElementById(\'detail\').style.display=\'none\'">إغلاق</button></div>';
   $('detail').style.display = 'block';
 }
@@ -235,8 +235,8 @@ function exportShown() {
   var header = Object.keys(RAW[0]).filter(function (k) { return k.charAt(0) !== '_'; });
   var rows = ROWS.map(function (r) { return header.map(function (h) { return r[h]; }); });
   $('b-export').disabled = true;
-  google.script.run.withSuccessHandler(function (name) { $('b-export').disabled = false; alert('أُنشئت ورقة «' + name + '». نزّليها من: ملف ← تنزيل ← CSV.'); })
-    .withFailureHandler(function (e) { $('b-export').disabled = false; alert('تعذّر التصدير: ' + e.message); })
+  google.script.run.withSuccessHandler(function (name) { $('b-export').disabled = false; alert('أنشئت ورقة «' + name + '». نزليها من: ملف ← تنزيل ← CSV.'); })
+    .withFailureHandler(function (e) { $('b-export').disabled = false; alert('تعذر التصدير: ' + e.message); })
     .exportRows(header, rows, '');
 }
 
