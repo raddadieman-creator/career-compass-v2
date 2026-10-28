@@ -3,7 +3,7 @@
    ===================================================================== */
 window.CC_CONFIG = {
   // رابط تطبيق Google Apps Script بعد نشره (انظري دليل الإعداد في README)
-  ENDPOINT: '',
+  ENDPOINT: 'https://script.google.com/macros/s/AKfycbzh5xuovpyCGwmUSqXCSA-gJtG2AMtIiywOVjUDFH9E3fbNXzU5sODVz-2JFDbOTUMM/exec',
 
   // رقم نسخة المقياس — يُحفظ مع كل استجابة، فلا تختلط بيانات النسخ
   VERSION: '2.0.0-draft',
