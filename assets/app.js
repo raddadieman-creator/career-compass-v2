@@ -39,6 +39,15 @@
   /* ── التهيئة ── */
   function init() {
     $('ver').textContent = CFG.VERSION;
+    // تدريج البوصلة: ٣٦ علامة، الرئيسية كل ٩٠ درجة
+    var ticks = '';
+    for (var a = 0; a < 360; a += 10) {
+      if (a % 90 === 0) continue;
+      var r1 = a % 30 === 0 ? 68 : 72, rad = (a - 90) * Math.PI / 180;
+      ticks += '<line class="' + (a % 30 === 0 ? 'major' : '') + '" x1="' + (100 + r1 * Math.cos(rad)).toFixed(1) + '" y1="' + (100 + r1 * Math.sin(rad)).toFixed(1) +
+        '" x2="' + (100 + 79 * Math.cos(rad)).toFixed(1) + '" y2="' + (100 + 79 * Math.sin(rad)).toFixed(1) + '"/>';
+    }
+    if ($('c-ticks')) $('c-ticks').innerHTML = ticks;
     if (TEST) $('test-banner').hidden = false;
     var code = params.get('school');
     S.fixedSchool = CFG.SCHOOLS.filter(function (s) { return s.code === code; })[0] || null;
