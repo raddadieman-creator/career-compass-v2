@@ -63,8 +63,7 @@
       $('school-fixed').hidden = false;
       $('school-fixed').textContent = 'المدرسة: ' + S.fixedSchool.name;
     } else {
-      fillSchools(null);
-      $('f-school').addEventListener('change', function () { $('wrap-school-other').hidden = this.value !== '__other'; });
+      chipGroup($('f-school'));
     }
 
     $('btn-start').addEventListener('click', function () {
@@ -104,28 +103,29 @@
     $('wrap-track').hidden = gr.stage !== 'secondary';
     if (!S.fixedSchool) fillSchools(gr.stage);
   }
+  /* المدرسة تظهر بعد اختيار الصف، وتُعرض مدارس المرحلة فقط */
   function fillSchools(stage) {
-    var list = CFG.SCHOOLS.filter(function (s) { return !stage || s.stage === stage; });
-    var html = '<option value="">' + (stage ? 'اختر' : 'اختر الصف أولاً') + '</option>' +
-      list.map(function (s) { return '<option value="' + esc(s.code) + '">' + esc(s.name) + '</option>'; }).join('');
-    if (CFG.ALLOW_OTHER_SCHOOL && stage) html += '<option value="__other">مدرسة أخرى</option>';
-    var cur = $('f-school').value;
-    $('f-school').innerHTML = html;
-    if (list.some(function (s) { return s.code === cur; })) $('f-school').value = cur;
+    var box = $('f-school');
+    var cur = picked(box);
+    var list = CFG.SCHOOLS.filter(function (s) { return s.stage === stage; });
+    $('wrap-school').hidden = !list.length;
+    box.innerHTML = list.map(function (s) {
+      return '<button type="button" class="chip" role="radio" aria-checked="' + (s.code === cur) + '" data-v="' + esc(s.code) + '">' + esc(s.name) + '</button>';
+    }).join('');
   }
 
   /* ── البيانات الأساسية ── */
   function onData() {
     var gr = pickedGrade();
-    var sch = S.fixedSchool || CFG.SCHOOLS.filter(function (s) { return s.code === $('f-school').value; })[0];
-    var other = !S.fixedSchool && $('f-school').value === '__other';
+    var code = picked($('f-school'));
+    var sch = S.fixedSchool || CFG.SCHOOLS.filter(function (s) { return s.code === code && s.stage === gr.stage; })[0];
     var u = {
       name: $('f-name').value.trim(),
       gender: picked($('f-gender')),
       stage: gr.stage, grade: gr.grade,
       track: gr.stage === 'secondary' ? picked($('f-track')) : '',
-      school: other ? $('f-school-other').value.trim() : (sch ? sch.name : ''),
-      schoolCode: other ? 'other' : (sch ? sch.code : ''),
+      school: sch ? sch.name : '',
+      schoolCode: sch ? sch.code : '',
       schoolFromLink: !!S.fixedSchool
     };
     var err = '';
@@ -133,7 +133,7 @@
     else if (!u.gender) err = 'اختر: طالبة أو طالب.';
     else if (!u.grade) err = 'اختر الصف.';
     else if (u.stage === 'secondary' && !u.track) err = 'اختر المسار.';
-    else if (!u.school) err = 'اختر المدرسة.';
+    else if (!u.school) err = 'اختر مدرستك.';
     $('form-error').textContent = err;
     if (err) return;
 

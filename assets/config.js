@@ -8,17 +8,13 @@ window.CC_CONFIG = {
   // رقم نسخة المقياس — يُحفظ مع كل استجابة، فلا تختلط بيانات النسخ
   VERSION: '2.0.0-draft',
 
-  // المدارس المشاركة. لكل مدرسة رابط خاص يملأ اسمها تلقائياً:
-  //   رابط المقياس + ?school=الرمز   مثال: ...index.html?school=m28
+  // المدارس المشاركة. تظهر للطالبة بعد اختيار صفها، مدارس مرحلتها فقط
   SCHOOLS: [
     { code: 'm28',     stage: 'intermediate', name: 'المتوسطة الثامنة والعشرون' },
     { code: 'arwa',    stage: 'intermediate', name: 'متوسطة أروى بنت أنيس' },
     { code: 'albayan', stage: 'secondary',    name: 'ثانوية البيان' },
     { code: 's20',     stage: 'secondary',    name: 'الثانوية العشرون' }
   ],
-
-  // هل تظهر «مدرسة أخرى» في القائمة؟
-  ALLOW_OTHER_SCHOOL: false,
 
   GRADES: {
     intermediate: ['أول متوسط', 'ثاني متوسط', 'ثالث متوسط'],
