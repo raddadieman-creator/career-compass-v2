@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2433;--muted:#667085;--line:#e4e7ec;--teal:#0e9f8a;--gold:#d98a0b;--rose:#d9364f;--green:#1f9d55;--purple:#6d4fd8;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;padding:16px}
+h1{font-size:20px;font-weight:800;margin-bottom:2px}
+.sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
+.filters label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--muted);font-weight:700}
+.filters select,.filters input[type=text],.filters input[type=date]{font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:120px}
+.filters .chk{flex-direction:row;align-items:center;gap:5px;font-size:12.5px;color:var(--ink);font-weight:500}
+.btn{font-family:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi .l{font-size:12px;color:var(--muted);font-weight:700}
+.kpi .v{font-size:24px;font-weight:800;margin-top:2px}
+.kpi .s{font-size:11.5px;color:var(--muted)}
+.progress{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
+.progress div{height:100%;background:var(--teal)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.panel h2{font-size:14px;font-weight:800;margin-bottom:8px}
+.chart{position:relative;height:220px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:#f0f2f5;font-weight:800;position:sticky;top:0;cursor:pointer}
+tr:hover td{background:#f7fbfa;cursor:pointer}
+.tablewrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11.5px;font-weight:700}
+.p-high{background:#e6f6ec;color:var(--green)}.p-medium{background:#fdf3e1;color:var(--gold)}.p-low{background:#fdebee;color:var(--rose)}
+.flag{color:var(--rose);font-weight:800}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+#detail{display:none;position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:20;overflow:auto;padding:24px}
+#detail .box{background:#fff;max-width:720px;margin:0 auto;border-radius:14px;padding:18px}
+.bar{margin:6px 0}.bar .t{display:flex;justify-content:space-between;font-size:12.5px}.bar .b{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.bar .b div{height:100%}
+.diag{border-right:3px solid var(--teal);background:#f6faf9;border-radius:8px;padding:7px 10px;margin:6px 0;font-size:13px}
+.note{font-size:11.5px;color:var(--muted);margin-top:8px}
+@media print{body{background:#fff;padding:0}.filters,.kpis,.grid,.tablewrap,h1,.sub,#d-actions{display:none!important}#detail{position:static;display:block!important;background:#fff;padding:0}}
+</style>
+</head>
+<body>
+<h1>لوحة مقياس جاهزية القرار المهني</h1>
+<div class="sub" id="sub">جارٍ تحميل البيانات…</div>
+
+<div class="filters">
+  <label>المدرسة<select id="f-school"></select></label>
+  <label>المرحلة<select id="f-stage"><option value="">الكل</option><option value="intermediate">المتوسطة</option><option value="secondary">الثانوية</option></select></label>
+  <label>الصف<select id="f-grade"></select></label>
+  <label>مستوى الجاهزية<select id="f-level"><option value="">الكل</option><option value="high">مرتفعة</option><option value="medium">متوسطة</option><option value="low">تحتاج تطوير</option></select></label>
+  <label>مستوى الخدمة<select id="f-service"></select></label>
+  <label>من تاريخ<input type="date" id="f-from"></label>
+  <label>إلى تاريخ<input type="date" id="f-to"></label>
+  <label>بحث بالاسم<input type="text" id="f-q"></label>
+  <label class="chk"><input type="checkbox" id="f-latest" checked>آخر محاولة فقط</label>
+  <label class="chk"><input type="checkbox" id="f-notest" checked>استبعاد التجريبي</label>
+  <label class="chk"><input type="checkbox" id="f-quality">استبعاد منخفض الجودة</label>
+  <button class="btn" id="b-reload">تحديث</button>
+  <button class="btn primary" id="b-export">تصدير المعروض إلى ورقة</button>
+</div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="grid">
+  <div class="panel"><h2>مستويات الجاهزية</h2><div class="chart"><canvas id="c-levels"></canvas></div></div>
+  <div class="panel"><h2>مستويات الخدمة</h2><div class="chart"><canvas id="c-service"></canvas></div></div>
+  <div class="panel"><h2>النمط الأعلى في هولاند</h2><div class="chart"><canvas id="c-holland"></canvas></div></div>
+  <div class="panel"><h2>متوسط الجوانب حسب المرحلة</h2><div class="chart"><canvas id="c-facets"></canvas></div></div>
+</div>
+
+<div class="panel">
+  <h2 id="t-title">الطالبات</h2>
+  <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+  <p class="note">اضغطي على أي صف لعرض تقرير الطالبة وطباعته. «منخفض الجودة» يعني: فشل سؤال التركيز، أو إجابات متطابقة تقريباً، أو سرعة غير طبيعية.</p>
+</div>
+
+<div id="detail"><div class="box" id="d-box"></div></div>
+
+<script>
+var META = /*__META__*/null;
+var STAGE = { intermediate: 'المتوسطة', secondary: 'الثانوية' };
+var LV = { high: 'مرتفعة', medium: 'متوسطة', low: 'تحتاج تطوير' };
+var SV = META.services;
+var HL = { R: 'واقعي', I: 'بحثي', A: 'فني', S: 'اجتماعي', E: 'مبادر', C: 'تقليدي' };
+var TARGET = { total: 1000, intermediate: 500, secondary: 500 };
+var RAW = [], ROWS = [], CHARTS = {}, SORT = { k: 'received_at', d: -1 };
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function num(v) { return v === '' || v == null || isNaN(Number(v)) ? null : Number(v); }
+function lowQuality(r) { return String(r.attention_pass) === '0' || String(r.straightline) === '1' || String(r.fast) === '1'; }
+
+function load() {
+  $('sub').textContent = 'جارٍ تحميل البيانات…';
+  google.script.run.withSuccessHandler(function (d) {
+    RAW = d.rows.map(function (row) { var o = {}; d.header.forEach(function (h, i) { o[h] = row[i]; }); return o; });
+    RAW.forEach(function (r) { r._latest = true; });
+    var maxAttempt = {};
+    RAW.forEach(function (r) { var k = r.student_key; if (!maxAttempt[k] || Number(r.attempt) > maxAttempt[k]) maxAttempt[k] = Number(r.attempt); });
+    RAW.forEach(function (r) { r._latest = Number(r.attempt) === maxAttempt[r.student_key]; });
+    fillFilters();
+    apply();
+    $('sub').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-SA') + ' · إجمالي السجلات في الملف: ' + RAW.length;
+  }).withFailureHandler(function (e) { $('sub').textContent = 'تعذّر تحميل البيانات: ' + e.message; }).getData();
+}
+
+function opts(sel, values, labels) {
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">الكل</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(labels ? labels[v] || v : v) + '</option>'; }).join('');
+  sel.value = values.indexOf(cur) >= 0 ? cur : '';
+}
+function uniq(k) { return RAW.map(function (r) { return r[k]; }).filter(function (v, i, a) { return v !== '' && a.indexOf(v) === i; }).sort(); }
+function fillFilters() {
+  opts($('f-school'), uniq('school'));
+  opts($('f-grade'), uniq('grade'));
+  opts($('f-service'), Object.keys(SV), SV);
+}
+
+function apply() {
+  var f = { school: $('f-school').value, stage: $('f-stage').value, grade: $('f-grade').value, level: $('f-level').value, service: $('f-service').value,
+    from: $('f-from').value, to: $('f-to').value, q: $('f-q').value.trim(), latest: $('f-latest').checked, notest: $('f-notest').checked, quality: $('f-quality').checked };
+  ROWS = RAW.filter(function (r) {
+    if (f.latest && !r._latest) return false;
+    if (f.notest && String(r.test) === '1') return false;
+    if (f.quality && lowQuality(r)) return false;
+    if (f.school && r.school !== f.school) return false;
+    if (f.stage && r.stage !== f.stage) return false;
+    if (f.grade && r.grade !== f.grade) return false;
+    if (f.level && r.cap_level !== f.level) return false;
+    if (f.service && r.service_level !== f.service) return false;
+    var d = String(r.received_at || '').slice(0, 10);
+    if (f.from && d < f.from) return false;
+    if (f.to && d > f.to) return false;
+    if (f.q && String(r.name).indexOf(f.q) === -1) return false;
+    return true;
+  });
+  kpis(); charts(); table();
+}
+
+function pct(n, d) { return d ? Math.round(n / d * 100) + '%' : '—'; }
+function kpis() {
+  var n = ROWS.length;
+  var st = { intermediate: 0, secondary: 0 }, lv = { high: 0, medium: 0, low: 0 }, ind = 0, lq = 0;
+  ROWS.forEach(function (r) { if (st[r.stage] != null) st[r.stage]++; if (lv[r.cap_level] != null) lv[r.cap_level]++; if (r.service_level === 'individual') ind++; if (lowQuality(r)) lq++; });
+  var all = RAW.filter(function (r) { return r._latest && String(r.test) !== '1'; });
+  var allSt = { intermediate: 0, secondary: 0 }; all.forEach(function (r) { if (allSt[r.stage] != null) allSt[r.stage]++; });
+  function card(l, v, s, prog) { return '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="s">' + (s || '') + '</div>' + (prog != null ? '<div class="progress"><div style="width:' + Math.min(100, prog) + '%"></div></div>' : '') + '</div>'; }
+  $('kpis').innerHTML =
+    card('المعروض الآن', n, 'حسب الفلاتر') +
+    card('التقدم نحو 1000', all.length, 'المتوسط ' + allSt.intermediate + ' / 500 · الثانوي ' + allSt.secondary + ' / 500', all.length / TARGET.total * 100) +
+    card('جاهزية مرتفعة', pct(lv.high, n), lv.high + ' طالبة') +
+    card('جاهزية متوسطة', pct(lv.medium, n), lv.medium + ' طالبة') +
+    card('تحتاج تطوير', pct(lv.low, n), lv.low + ' طالبة') +
+    card('إدارة حالة فردية', ind, 'تحتاج متابعة فردية') +
+    card('منخفضة الجودة', lq, 'تُراجَع قبل التحليل');
+}
+
+function chart(id, type, labels, datasets, extra) {
+  if (CHARTS[id]) CHARTS[id].destroy();
+  CHARTS[id] = new Chart($(id), Object.assign({ type: type, data: { labels: labels, datasets: datasets },
+    options: { maintainAspectRatio: false, plugins: { legend: { display: type === 'doughnut' || datasets.length > 1, position: 'bottom', labels: { font: { family: 'Tajawal' } } } },
+      scales: type === 'doughnut' ? {} : { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { family: 'Tajawal' } } } } } }, extra || {}));
+}
+function count(k, keys) { var c = {}; keys.forEach(function (x) { c[x] = 0; }); ROWS.forEach(function (r) { if (c[r[k]] != null) c[r[k]]++; }); return keys.map(function (x) { return c[x]; }); }
+function charts() {
+  if (typeof Chart === 'undefined') return;
+  chart('c-levels', 'doughnut', ['مرتفعة', 'متوسطة', 'تحتاج تطوير'], [{ data: count('cap_level', ['high', 'medium', 'low']), backgroundColor: ['#1f9d55', '#d98a0b', '#d9364f'] }]);
+  var sk = Object.keys(SV);
+  chart('c-service', 'bar', sk.map(function (k) { return SV[k]; }), [{ data: count('service_level', sk), backgroundColor: '#6d4fd8' }]);
+  var hk = ['R', 'I', 'A', 'S', 'E', 'C'];
+  chart('c-holland', 'bar', hk.map(function (k) { return HL[k] + ' ' + k; }), [{ data: count('holland_top', hk), backgroundColor: '#0e9f8a' }]);
+  var fk = META.facets.filter(function (f) { return ROWS.some(function (r) { return num(r['facet_' + f.id]) != null; }); });
+  function mean(stage, f) { var v = ROWS.filter(function (r) { return r.stage === stage; }).map(function (r) { return num(r['facet_' + f.id]); }).filter(function (x) { return x != null; }); return v.length ? Math.round(v.reduce(function (a, b) { return a + b; }, 0) / v.length) : null; }
+  chart('c-facets', 'bar', fk.map(function (f) { return f.label; }),
+    [{ label: 'المتوسطة', data: fk.map(function (f) { return mean('intermediate', f); }), backgroundColor: '#d98a0b' },
+     { label: 'الثانوية', data: fk.map(function (f) { return mean('secondary', f); }), backgroundColor: '#0e9f8a' }],
+    { options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } }, plugins: { legend: { position: 'bottom' } } } });
+}
+
+var COLS = [
+  ['name', 'الاسم'], ['school', 'المدرسة'], ['grade', 'الصف'], ['cap_score', 'الجاهزية %'], ['cap_level', 'المستوى'],
+  ['service_level', 'الخدمة'], ['holland_code', 'هولاند'], ['diagnoses', 'التشخيص'], ['_q', 'الجودة'], ['attempt', 'المحاولة'], ['received_at', 'التاريخ']
+];
+function cell(r, k) {
+  if (k === 'cap_level') return r.cap_level ? '<span class="pill p-' + esc(r.cap_level) + '">' + esc(LV[r.cap_level]) + '</span>' : '';
+  if (k === 'service_level') return esc(SV[r.service_level] || '');
+  if (k === 'diagnoses') return esc(diagLabels(r).join('، '));
+  if (k === '_q') return lowQuality(r) ? '<span class="flag">مراجعة</span>' : '✓';
+  if (k === 'received_at') return esc(String(r.received_at).slice(0, 10));
+  if (k === 'cap_score') return num(r.cap_score) == null ? '' : Math.round(num(r.cap_score));
+  return esc(r[k]);
+}
+function diagLabels(r) {
+  return String(r.diagnoses || '').split(' ').filter(function (c, i, a) { return c && a.indexOf(c) === i && c !== 'none' && c !== 'shared_ok'; })
+    .map(function (c) { return META.diagnoses[c] ? META.diagnoses[c].label : c; });
+}
+function table() {
+  var rows = ROWS.slice().sort(function (a, b) { var x = a[SORT.k], y = b[SORT.k]; var nx = num(x), ny = num(y); if (nx != null && ny != null) { x = nx; y = ny; } return (x > y ? 1 : x < y ? -1 : 0) * SORT.d; });
+  $('t-title').textContent = 'الطالبات (' + rows.length + ')';
+  $('tbl').querySelector('thead').innerHTML = '<tr>' + COLS.map(function (c) { return '<th data-k="' + c[0] + '">' + c[1] + (SORT.k === c[0] ? (SORT.d > 0 ? ' ▲' : ' ▼') : '') + '</th>'; }).join('') + '</tr>';
+  $('tbl').querySelector('tbody').innerHTML = rows.length ? rows.map(function (r) { return '<tr data-id="' + esc(r.submission_id) + '">' + COLS.map(function (c) { return '<td>' + cell(r, c[0]) + '</td>'; }).join('') + '</tr>'; }).join('')
+    : '<tr><td colspan="' + COLS.length + '" class="empty">لا توجد سجلات بهذه الفلاتر</td></tr>';
+}
+
+function bar(label, v) {
+  var c = v >= 70 ? '#1f9d55' : v >= 45 ? '#d98a0b' : '#d9364f';
+  return '<div class="bar"><div class="t"><span>' + esc(label) + '</span><span>' + (v == null ? '—' : Math.round(v) + '%') + '</span></div><div class="b"><div style="width:' + (v || 0) + '%;background:' + c + '"></div></div></div>';
+}
+function detail(id) {
+  var r = RAW.filter(function (x) { return x.submission_id === id; })[0];
+  if (!r) return;
+  var facets = META.facets.filter(function (f) { return num(r['facet_' + f.id]) != null; });
+  var diags = String(r.diagnoses || '').split(' ').filter(function (c, i, a) { return c && a.indexOf(c) === i && META.diagnoses[c] && c !== 'none' && c !== 'shared_ok'; });
+  $('d-box').innerHTML =
+    '<h1>' + esc(r.name) + '</h1><div class="sub">' + esc(r.school) + ' · ' + esc(r.grade) + (r.track ? ' · ' + esc(r.track) : '') + ' · ' + esc(String(r.received_at).slice(0, 10)) + ' · المحاولة ' + esc(r.attempt) + '</div>' +
+    '<div class="kpis"><div class="kpi"><div class="l">الجاهزية</div><div class="v">' + (num(r.cap_score) == null ? '—' : Math.round(num(r.cap_score)) + '%') + '</div><div class="s">' + esc(LV[r.cap_level] || '') + '</div></div>' +
+    '<div class="kpi"><div class="l">مستوى الخدمة</div><div class="v" style="font-size:16px">' + esc(SV[r.service_level] || '') + '</div><div class="s">' + esc([String(r.service_raised) === '1' ? 'رُفع بناءً على أسئلة المتابعة' : '', r.service_basis === 'capability_only' ? 'مرجعيات القرار غير مقيسة' : ''].filter(Boolean).join(' · ')) + '</div></div>' +
+    '<div class="kpi"><div class="l">رمز هولاند</div><div class="v">' + esc(r.holland_code) + '</div><div class="s">الاتساق: ' + esc({ high: 'مرتفع', medium: 'متوسط', low: 'منخفض' }[r.holland_consistency] || '') + '</div></div></div>' +
+    '<h2 style="font-size:14px;margin:8px 0">الجوانب</h2>' + facets.map(function (f) { return bar(f.label, num(r['facet_' + f.id])); }).join('') +
+    '<h2 style="font-size:14px;margin:12px 0 4px">التشخيص والتدخل المقترح</h2>' + (diags.length ? diags.map(function (c) { var d = META.diagnoses[c]; return '<div class="diag"><b>' + esc(d.label) + '</b><br>' + esc(d.recommendation) + '</div>'; }).join('') : '<p class="note">لم تُفتح أسئلة متابعة لهذه الطالبة.</p>') +
+    '<p class="note">الجودة: سؤال التركيز ' + (String(r.attention_pass) === '1' ? 'صحيح' : String(r.attention_pass) === '0' ? 'خاطئ' : '—') + ' · إجابات متطابقة: ' + (String(r.straightline) === '1' ? 'نعم' : 'لا') + ' · المدة: ' + esc(r.duration_sec) + ' ثانية</p>' +
+    '<p class="note">الحدود المستخدمة مؤقتة إلى أن تُشتق من بيانات العينة. التشخيص يُناقش مع الطالبة، ولا يُعد حكماً نهائياً.</p>' +
+    '<div id="d-actions" style="margin-top:12px;display:flex;gap:8px"><button class="btn primary" onclick="window.print()">طباعة التقرير</button><button class="btn" onclick="document.getElementById(\'detail\').style.display=\'none\'">إغلاق</button></div>';
+  $('detail').style.display = 'block';
+}
+
+function exportShown() {
+  if (!ROWS.length) return;
+  var header = Object.keys(RAW[0]).filter(function (k) { return k.charAt(0) !== '_'; });
+  var rows = ROWS.map(function (r) { return header.map(function (h) { return r[h]; }); });
+  $('b-export').disabled = true;
+  google.script.run.withSuccessHandler(function (name) { $('b-export').disabled = false; alert('أُنشئت ورقة «' + name + '». نزّليها من: ملف ← تنزيل ← CSV.'); })
+    .withFailureHandler(function (e) { $('b-export').disabled = false; alert('تعذّر التصدير: ' + e.message); })
+    .exportRows(header, rows, '');
+}
+
+['f-school', 'f-stage', 'f-grade', 'f-level', 'f-service', 'f-from', 'f-to', 'f-latest', 'f-notest', 'f-quality'].forEach(function (id) { $(id).addEventListener('change', apply); });
+$('f-q').addEventListener('input', apply);
+$('b-reload').addEventListener('click', load);
+$('b-export').addEventListener('click', exportShown);
+$('tbl').addEventListener('click', function (e) {
+  var th = e.target.closest('th'); if (th) { var k = th.getAttribute('data-k'); SORT = { k: k, d: SORT.k === k ? -SORT.d : 1 }; table(); return; }
+  var tr = e.target.closest('tr[data-id]'); if (tr) detail(tr.getAttribute('data-id'));
+});
+$('detail').addEventListener('click', function (e) { if (e.target.id === 'detail') this.style.display = 'none'; });
+load();
+</script>
+</body>
+</html>

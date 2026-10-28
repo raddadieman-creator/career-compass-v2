@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="مقياس تفاعلي لجاهزية القرار المهني لطلبة المرحلتين المتوسطة والثانوية">
+<title>مقياس جاهزية القرار المهني</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div id="test-banner" class="test-banner" hidden>وضع التجربة: هذه الإجابات تُعلَّم تجريبية ولا تدخل في التحليل</div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M20 7 L24 20 L20 33 L16 20 Z" fill="var(--accent)"/><path d="M20 20 L24 20 L20 33 Z" fill="var(--primary)"/><circle cx="20" cy="20" r="2.2" fill="var(--surface)"/></svg>
+    <span>مقياس جاهزية القرار المهني</span>
+  </div>
+  <div class="journey" id="journey" hidden></div>
+</header>
+
+<main class="wrap">
+
+  <!-- الترحيب -->
+  <section class="screen active" id="screen-welcome">
+    <div class="hero">
+      <p class="eyebrow">رحلة قصيرة · ١٠ إلى ١٥ دقيقة</p>
+      <h1>كيف تبني قرارك المهني؟</h1>
+      <p class="lead">لا يقترح عليك هذا المقياس تخصصاً بعينه. يساعدك أنت والمرشد على فهم جاهزيتك لاتخاذ القرار، وما الذي يقرّبك منه.</p>
+      <ol class="path">
+        <li><span class="stop s1">١</span><div><b>التفضيلات</b><small>ما الذي يشبهك من أنشطة ومواقف</small></div></li>
+        <li><span class="stop s2">٢</span><div><b>الإسناد الذاتي</b><small>معرفتك بنفسك وبالخيارات أمامك</small></div></li>
+        <li><span class="stop s3">٣</span><div><b>مرجعيات القرار</b><small>من وما الذي يؤثر في قرارك</small></div></li>
+        <li><span class="stop s4">★</span><div><b>نتيجتك</b><small>صورة واضحة عن جاهزيتك وخطوتك التالية</small></div></li>
+      </ol>
+      <p class="note">لا توجد إجابة صحيحة أو خاطئة. اختر ما يشبهك فعلاً.</p>
+      <button class="btn primary big" id="btn-start" type="button">ابدأ الرحلة</button>
+      <p class="assent">بالضغط على «ابدأ الرحلة» أوافق على المشاركة، وأعرف أن إجاباتي تُستخدم لإرشادي المهني ولأغراض البحث العلمي دون نشر اسمي.</p>
+    </div>
+  </section>
+
+  <!-- البيانات -->
+  <section class="screen" id="screen-data">
+    <div class="card">
+      <p class="eyebrow">قبل أن نبدأ</p>
+      <h2>عرّفنا بنفسك</h2>
+      <div class="field">
+        <label for="f-name">الاسم</label>
+        <input type="text" id="f-name" autocomplete="off" placeholder="الاسم الأول واسم العائلة">
+      </div>
+      <div class="field">
+        <span class="label">أنا</span>
+        <div class="chips" id="f-gender" role="radiogroup">
+          <button type="button" class="chip" data-v="F" role="radio" aria-checked="false">طالبة</button>
+          <button type="button" class="chip" data-v="M" role="radio" aria-checked="false">طالب</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">صفّي</span>
+        <div class="grade-groups">
+          <div><small>المتوسطة</small><div class="chips" id="f-grade-int" role="radiogroup"></div></div>
+          <div><small>الثانوية</small><div class="chips" id="f-grade-sec" role="radiogroup"></div></div>
+        </div>
+      </div>
+      <div class="field" id="wrap-track" hidden>
+        <span class="label">مساري</span>
+        <div class="chips wrap-chips" id="f-track" role="radiogroup"></div>
+      </div>
+      <div class="field" id="wrap-school">
+        <label for="f-school">المدرسة</label>
+        <select id="f-school"></select>
+      </div>
+      <div class="field" id="wrap-school-other" hidden>
+        <label for="f-school-other">اسم المدرسة</label>
+        <input type="text" id="f-school-other" autocomplete="off">
+      </div>
+      <p class="school-fixed" id="school-fixed" hidden></p>
+      <p class="form-error" id="form-error" role="alert"></p>
+      <button class="btn primary big" id="btn-data" type="button">لنبدأ</button>
+    </div>
+  </section>
+
+  <!-- السؤال -->
+  <section class="screen" id="screen-quiz">
+    <div class="station-head">
+      <span class="station-tag" id="q-station"></span>
+      <span class="q-count" id="q-count"></span>
+    </div>
+    <div class="station-bar"><div id="q-bar"></div></div>
+    <div class="card qcard" id="q-card">
+      <p class="q-meta" id="q-meta"></p>
+      <h2 class="q-text" id="q-text"></h2>
+      <div class="options" id="q-options" role="radiogroup"></div>
+    </div>
+    <div class="q-nav">
+      <button class="btn ghost" id="btn-back" type="button">السؤال السابق</button>
+    </div>
+  </section>
+
+  <!-- بين المحطات -->
+  <section class="screen" id="screen-break">
+    <div class="card break">
+      <div class="medal" id="b-medal" aria-hidden="true"></div>
+      <p class="eyebrow" id="b-done"></p>
+      <h2 id="b-title"></h2>
+      <p class="lead" id="b-intro"></p>
+      <button class="btn primary big" id="btn-next" type="button">متابعة</button>
+    </div>
+  </section>
+
+  <!-- النتائج -->
+  <section class="screen" id="screen-results">
+    <div class="results-head">
+      <p class="eyebrow">نتيجتك</p>
+      <h1 id="r-hello"></h1>
+      <p class="lead">هذه النتائج تصف وضعك الآن، وهي قابلة للتغير. لا تحكم على قدراتك، ولا تُغني عن الحديث مع المرشد.</p>
+      <div id="save-status"></div>
+    </div>
+
+    <div class="card r-ready">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+          <circle cx="60" cy="60" r="50" class="ring-bg"/>
+          <circle cx="60" cy="60" r="50" class="ring-fg" id="r-ring"/>
+        </svg>
+        <div class="ring-text"><b id="r-cap-score"></b><span>الجاهزية</span></div>
+      </div>
+      <div class="ready-body">
+        <span class="level-pill" id="r-cap-level"></span>
+        <p id="r-cap-text"></p>
+        <div class="bars" id="r-facets"></div>
+      </div>
+    </div>
+
+    <div class="card" id="card-complexity">
+      <h3>ما يؤثر في قرارك</h3>
+      <p class="muted">ارتفاع هذه المؤشرات يعني أن قرارك محاط بمؤثرات أكثر، لا أنك غير مستعد.</p>
+      <div class="bars" id="r-complexity"></div>
+    </div>
+
+    <div class="card r-next">
+      <h3>خطوتك التالية</h3>
+      <div class="service" id="r-service"></div>
+      <div id="r-diagnoses"></div>
+    </div>
+
+    <div class="card r-holland">
+      <h3>تفضيلاتك على شكل هولاند السداسي</h3>
+      <div class="holland-grid">
+        <svg viewBox="-150 -140 300 280" class="hex" id="r-hex" role="img" aria-label="شكل هولاند السداسي لتفضيلاتك"></svg>
+        <div>
+          <div class="code" id="r-code"></div>
+          <p class="code-name" id="r-name"></p>
+          <p id="r-desc"></p>
+          <p class="muted" id="r-consistency"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>مجالات تستحق الاستكشاف</h3>
+      <p class="muted">للحوار مع المرشد والاستكشاف، وليست توصية بالالتحاق.</p>
+      <div class="tags" id="r-sectors"></div>
+      <ul class="specs" id="r-specs"></ul>
+    </div>
+
+    <div class="card">
+      <h3>ملخص</h3>
+      <dl class="summary" id="r-summary"></dl>
+      <button class="btn ghost print-btn" type="button" onclick="window.print()">طباعة النتيجة</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">الباحثة: إيمان عبد العزيز الردادي · النسخة <span id="ver" dir="ltr"></span></footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/engine.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
