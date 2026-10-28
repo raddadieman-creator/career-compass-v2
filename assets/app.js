@@ -24,7 +24,8 @@
   function g(m, f) { return fem() ? f : m; }
   function txt(it) { return (fem() && it.textF) ? it.textF : it.text; }
   function ar(n) { return String(n).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; }); }
-  function shortTitle(st) { return st.title.split(':').pop().trim(); }
+  function shortTitle(st) { return st.title; }
+  function intro(st) { return (fem() && st.introF) ? st.introF : st.intro; }
   function show(id) {
     Array.prototype.forEach.call(document.querySelectorAll('.screen'), function (s) { s.classList.remove('active'); });
     $(id).classList.add('active');
@@ -145,14 +146,17 @@
     S.startedAt = new Date();
     $('journey').hidden = false;
     drawJourney();
-    renderQuestion();
-    show('screen-quiz');
+    $('b-medal').innerHTML = '<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--primary)" stroke-width="4"/><path d="M26 10 L31 26 L26 42 L21 26 Z" fill="var(--accent)"/></svg>';
+    $('b-done').textContent = 'المحطة الأولى';
+    $('b-title').textContent = S.queue[0].station.title;
+    $('b-intro').textContent = intro(S.queue[0].station);
+    show('screen-break');
   }
 
   /* ── خريطة الرحلة ── */
   function drawJourney() {
     var stops = S.form.stations.map(function (s) { return { id: s.station.id, label: shortTitle(s.station) }; })
-      .concat([{ id: 'results', label: 'نتيجتك' }]);
+      .concat([{ id: 'results', label: 'نتيجتي' }]);
     var curId = S.finishedAt ? 'results' : (S.queue[S.si] ? S.queue[S.si].station.id : 'results');
     if (curId === 'followup') curId = 'vision';
     var curIdx = stops.map(function (s) { return s.id; }).indexOf(curId);
@@ -173,7 +177,7 @@
     $('q-station').textContent = st.station.title;
     $('q-count').textContent = ar(S.qi + 1) + ' من ' + ar(n);
     $('q-bar').style.width = Math.round(S.qi / n * 100) + '%';
-    $('q-meta').textContent = it.meta || '';
+    $('q-meta').textContent = ''; // تسميات البنود الداخلية لا تُعرض للطالبة
     $('q-text').textContent = txt(it);
     var prev = it._followup ? S.fu[it.id] : S.responses[it.id];
     $('q-options').innerHTML = '';
@@ -217,9 +221,9 @@
     if (!next) { finish(); return; }
     drawJourney();
     $('b-medal').innerHTML = medal(done.id);
-    $('b-done').textContent = g('أنهيت ', 'أنهيتِ ') + shortTitle(done);
+    $('b-done').textContent = g('أنهيت «', 'أنهيتِ «') + shortTitle(done) + '»';
     $('b-title').textContent = next.station.title;
-    $('b-intro').textContent = next.station.intro;
+    $('b-intro').textContent = intro(next.station);
     show('screen-break');
   }
 

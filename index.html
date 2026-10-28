@@ -26,18 +26,18 @@
   <!-- الترحيب -->
   <section class="screen active" id="screen-welcome">
     <div class="hero">
-      <p class="eyebrow">تأخذ ١٠ إلى ١٥ دقيقة</p>
-      <h1>هل أنت <span class="nw">جاهز/ة</span> لاختيار تخصصك؟</h1>
-      <p class="lead">أسئلة قصيرة عنك وعن طريقة تفكيرك في مستقبلك. في النهاية تظهر لك صورة واضحة عن وضعك الآن، والخطوة التي تساعدك بعدها.</p>
+      <p class="eyebrow">١٠ دقائق تقريباً</p>
+      <h1>هل اختيار التخصص يحيّرك؟</h1>
+      <p class="lead">أسئلة قصيرة وسهلة، وفي آخرها نتيجة توضّح لك وضعك اليوم، والخطوة التي تساعدك بعدها.</p>
       <ol class="path">
-        <li><span class="stop s1">١</span><div><b>التفضيلات</b><small>ما الذي يشبهك من أنشطة ومواقف</small></div></li>
-        <li><span class="stop s2">٢</span><div><b>الإسناد الذاتي</b><small>معرفتك بنفسك وبالخيارات أمامك</small></div></li>
-        <li><span class="stop s3">٣</span><div><b>مرجعيات القرار</b><small>من يؤثر في قرارك، وما الذي يؤثر فيه</small></div></li>
-        <li><span class="stop s4">★</span><div><b>نتيجتك</b><small>وضعك الآن، وخطوتك التالية</small></div></li>
+        <li><span class="stop s1">١</span><div><b>ما يشبهني</b><small>مواقف ونشاطات من حياتك اليومية</small></div></li>
+        <li><span class="stop s2">٢</span><div><b>أعرف نفسي وخياراتي</b><small>قدراتك، ومعلوماتك عن التخصصات والوظائف</small></div></li>
+        <li><span class="stop s3">٣</span><div><b>من يؤثر في قراري</b><small>الأهل والأصدقاء وكل ما يؤثر في اختيارك</small></div></li>
+        <li><span class="stop s4">★</span><div><b>نتيجتي</b><small>صورة واضحة عن وضعك، وخطوتك التالية</small></div></li>
       </ol>
-      <p class="note">اختر/ي ما يشبهك فعلاً، لا الإجابة التي تبدو مطلوبة.</p>
-      <button class="btn primary big" id="btn-start" type="button">ابدأ/ي</button>
-      <p class="assent">الضغط على «ابدأ/ي» يعني الموافقة على المشاركة. الإجابات تُستخدم للإرشاد ولأغراض البحث، ولا يُنشر الاسم.</p>
+      <p class="note">لا توجد إجابة صحيحة وأخرى خاطئة. الإجابة الصحيحة هي التي تشبهك.</p>
+      <button class="btn primary big" id="btn-start" type="button">يلا نبدأ</button>
+      <p class="assent">الضغط على «يلا نبدأ» يعني الموافقة على المشاركة. الإجابات تُستخدم للإرشاد ولأغراض البحث، ولا يُنشر الاسم.</p>
     </div>
   </section>
 
@@ -86,7 +86,7 @@
     </div>
     <div class="station-bar"><div id="q-bar"></div></div>
     <div class="card qcard" id="q-card">
-      <p class="q-meta" id="q-meta"></p>
+      <p class="q-meta" id="q-meta" hidden></p>
       <h2 class="q-text" id="q-text"></h2>
       <div class="options" id="q-options" role="radiogroup"></div>
     </div>
@@ -143,7 +143,8 @@
     </div>
 
     <div class="card r-holland">
-      <h3>تفضيلاتك على شكل هولاند السداسي</h3>
+      <h3>ميولك</h3>
+      <p class="muted">مرسومة على شكل هولاند السداسي: كلما امتد الشكل نحو جهة، زاد ميلك إليها.</p>
       <div class="holland-grid">
         <svg viewBox="-150 -140 300 280" class="hex" id="r-hex" role="img" aria-label="شكل هولاند السداسي لتفضيلاتك"></svg>
         <div>
