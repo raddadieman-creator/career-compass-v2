@@ -316,6 +316,15 @@
 
   /* ── النتائج ── */
   function counselor() { return g('المرشد الطلابي', 'المرشدة الطلابية'); }
+  /* تسميات للطالبة؛ التسميات البحثية (خدمة ذاتية...) تبقى في البيانات ولوحة التحكم */
+  function serviceLabel(level) {
+    return {
+      self: 'المتابعة بنفسك',
+      brief: 'لقاء قصير مع ' + counselor(),
+      brief_group: 'برنامج جماعي مع ' + counselor(),
+      individual: 'لقاء فردي مع ' + counselor()
+    }[level];
+  }
   function serviceText(level) {
     return {
       self: g('تستطيع المتابعة بنفسك: ابحث في التخصصات التي تهمك، وارجع إلى ', 'تستطيعين المتابعة بنفسك: ابحثي في التخصصات التي تهمك، وارجعي إلى ') + counselor() + g(' متى احتجت.', ' متى احتجت.'),
@@ -377,7 +386,7 @@
 
     $('r-service').innerHTML = service ?
       '<span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3 L15 12 L12 21 L9 12 Z" fill="currentColor"/></svg></span>' +
-      '<div><b>' + esc(E.SERVICE_LABELS[service.level]) + '</b>' + esc(serviceText(service.level)) + '</div>' : '';
+      '<div><b>' + esc(serviceLabel(service.level)) + '</b>' + esc(serviceText(service.level)) + '</div>' : '';
     var seen = {};
     $('r-diagnoses').innerHTML = diagnoses.filter(function (d) {
       if (d.code === 'none' || d.code === 'shared_ok' || seen[d.code]) return false;
@@ -399,7 +408,7 @@
     var sum = [
       ['الاسم', S.user.name], ['المدرسة', S.user.school], ['الصف', S.user.grade + (S.user.track ? ' · ' + S.user.track : '')],
       ['الجاهزية', cap.level ? E.LEVEL_LABELS[cap.level] : '—'], ['رمز هولاند', it ? it.code : '—'],
-      ['الخطوة التالية', service ? E.SERVICE_LABELS[service.level] : '—']
+      ['الخطوة التالية', service ? serviceLabel(service.level) : '—']
     ];
     $('r-summary').innerHTML = sum.map(function (s) { return '<div><dt>' + esc(s[0]) + '</dt><dd>' + esc(s[1]) + '</dd></div>'; }).join('');
     show('screen-results');
