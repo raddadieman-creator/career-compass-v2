@@ -205,3 +205,4 @@ input[type=text]:focus, select:focus { border-color: var(--primary); }
   body { background: #fff; }
   .card { box-shadow: none; break-inside: avoid; }
 }
+.nw { white-space: nowrap; }

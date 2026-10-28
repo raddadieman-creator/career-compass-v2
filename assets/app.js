@@ -75,7 +75,7 @@
     $('btn-next').addEventListener('click', function () { renderQuestion(); show('screen-quiz'); });
 
     fetch('data/items.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (b) { S.bank = b; })
-      .catch(function () { $('btn-start').disabled = true; $('btn-start').textContent = 'تعذّر تحميل الأسئلة، أعيدي تحميل الصفحة'; });
+      .catch(function () { $('btn-start').disabled = true; $('btn-start').textContent = 'تعذّر تحميل الأسئلة، أعد/ي تحميل الصفحة'; });
 
     flushQueue();
     setInterval(flushQueue, 20000);
@@ -129,11 +129,11 @@
       schoolFromLink: !!S.fixedSchool
     };
     var err = '';
-    if (!u.name) err = 'اكتب الاسم من فضلك.';
-    else if (!u.gender) err = 'اختر: طالبة أو طالب.';
-    else if (!u.grade) err = 'اختر الصف.';
-    else if (u.stage === 'secondary' && !u.track) err = 'اختر المسار.';
-    else if (!u.school) err = 'اختر مدرستك.';
+    if (!u.name) err = 'اكتب/ي الاسم من فضلك.';
+    else if (!u.gender) err = 'اختر/ي: طالبة أو طالب.';
+    else if (!u.grade) err = 'اختر/ي الصف.';
+    else if (u.stage === 'secondary' && !u.track) err = 'اختر/ي المسار.';
+    else if (!u.school) err = 'اختر/ي المدرسة.';
     $('form-error').textContent = err;
     if (err) return;
 
@@ -287,7 +287,7 @@
   function setStatus(kind) {
     var el = $('save-status');
     if (!CFG.ENDPOINT) { el.innerHTML = '<span class="status wait">وضع المعاينة: الحفظ غير مربوط بعد</span>'; return; }
-    var m = { ok: ['ok', 'تم حفظ إجاباتك'], wait: ['wait', 'جارٍ حفظ إجاباتك…'], err: ['err', 'لم يكتمل الحفظ بعد، وسيُعاد تلقائياً. أبقِ الصفحة مفتوحة.'] }[kind];
+    var m = { ok: ['ok', 'تم حفظ إجاباتك'], wait: ['wait', 'جارٍ حفظ إجاباتك…'], err: ['err', 'لم يكتمل الحفظ بعد، وسيُعاد تلقائياً. الرجاء إبقاء الصفحة مفتوحة.'] }[kind];
     el.innerHTML = '<span class="status ' + m[0] + '">' + m[1] + '</span>';
   }
 
@@ -311,12 +311,15 @@
   }
 
   /* ── النتائج ── */
-  var SERVICE_TEXT = {
-    self: 'تستطيعين المتابعة بنفسك: ابحثي في التخصصات التي تهمك، وارجعي إلى المرشدة الطلابية متى احتجتِ.',
-    brief: 'لقاء قصير أو ورشة مع المرشدة الطلابية يكفي ليوضح لك الصورة.',
-    brief_group: 'برنامج جماعي مع المرشدة الطلابية يساعدك على بناء قرارك خطوة خطوة.',
-    individual: 'لقاء فردي مع المرشدة الطلابية هو الأنسب لك الآن.'
-  };
+  function counselor() { return g('المرشد الطلابي', 'المرشدة الطلابية'); }
+  function serviceText(level) {
+    return {
+      self: g('تستطيع المتابعة بنفسك: ابحث في التخصصات التي تهمك، وارجع إلى ', 'تستطيعين المتابعة بنفسك: ابحثي في التخصصات التي تهمك، وارجعي إلى ') + counselor() + g(' متى احتجت.', ' متى احتجتِ.'),
+      brief: 'لقاء قصير أو ورشة مع ' + counselor() + ' يكفي ليوضح لك الصورة.',
+      brief_group: 'برنامج جماعي مع ' + counselor() + ' يساعدك على بناء قرارك خطوة خطوة.',
+      individual: 'لقاء فردي مع ' + counselor() + ' هو الأنسب لك الآن.'
+    }[level];
+  }
   var CONS_TEXT = {
     high: 'أعلى نمطين لديك متجاوران على الشكل السداسي، أي أن تفضيلاتك متسقة.',
     medium: 'أعلى نمطين لديك متقاربان بدرجة متوسطة.',
@@ -348,6 +351,7 @@
   function renderResults(r, diagnoses, service) {
     var first = S.user.name.split(/\s+/)[0];
     $('r-hello').textContent = g('أحسنت يا ', 'أحسنتِ يا ') + first;
+    $('r-lead').textContent = 'هذه صورة لوضعك اليوم، وتتغير كلما ' + g('عرفت', 'عرفتِ') + ' أكثر. ' + g('اعرضها على ', 'اعرضيها على ') + counselor() + g(' ليساعدك', ' لتساعدك') + ' في خطوتك التالية.';
 
     var cap = r.capability;
     var score = cap.score == null ? 0 : Math.round(cap.score);
@@ -369,7 +373,7 @@
 
     $('r-service').innerHTML = service ?
       '<span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3 L15 12 L12 21 L9 12 Z" fill="currentColor"/></svg></span>' +
-      '<div><b>' + esc(E.SERVICE_LABELS[service.level]) + '</b>' + esc(SERVICE_TEXT[service.level]) + '</div>' : '';
+      '<div><b>' + esc(E.SERVICE_LABELS[service.level]) + '</b>' + esc(serviceText(service.level)) + '</div>' : '';
     var seen = {};
     $('r-diagnoses').innerHTML = diagnoses.filter(function (d) {
       if (d.code === 'none' || d.code === 'shared_ok' || seen[d.code]) return false;
