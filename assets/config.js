@@ -6,10 +6,10 @@ window.CC_CONFIG = {
   ENDPOINT: 'https://script.google.com/macros/s/AKfycbzh5xuovpyCGwmUSqXCSA-gJtG2AMtIiywOVjUDFH9E3fbNXzU5sODVz-2JFDbOTUMM/exec',
 
   // رقم نسخة المقياس — يُحفظ مع كل استجابة، فلا تختلط بيانات النسخ
-  VERSION: '3.1.0-pilot',
+  VERSION: '3.2.0-pilot',
 
-  // النموذج المطبق: 'full' كل عبارات المسودة الرابعة، أو 'short' النموذج المختصر المعرّف في data/items.json
-  FORM: 'short',
+  // النموذج المطبق: 'full' كل العبارات، أو 'short' (٤ لكل جانب)، أو 'pilot5' (٥ لكل جانب عدا FF) — معرّفة في data/items.json
+  FORM: 'pilot5',
 
   // المدارس المشاركة. تظهر للطالبة بعد اختيار صفها، مدارس مرحلتها فقط
   SCHOOLS: [
