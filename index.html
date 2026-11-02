@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="مقياس تفاعلي لجاهزية القرار المهني لطلبة المرحلتين المتوسطة والثانوية">
+<meta name="description" content="البوصلة المهنية: أداة تقدير الجاهزية لاتخاذ القرار المهني لطلبة المرحلتين المتوسطة والثانوية">
 <title>البوصلة المهنية</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Ccircle cx=%2720%27 cy=%2720%27 r=%2718%27 fill=%27%23fff%27 stroke=%27%2313233a%27 stroke-width=%273%27/%3E%3Cpath d=%27M20 5 L25 20 L15 20 Z%27 fill=%27%23f26b4a%27/%3E%3Cpath d=%27M20 35 L25 20 L15 20 Z%27 fill=%27%230d8487%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,7 @@
 <header class="topbar">
   <div class="brand">
     <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M20 7 L24 20 L20 33 L16 20 Z" fill="var(--accent)"/><path d="M20 20 L24 20 L20 33 Z" fill="var(--primary)"/><circle cx="20" cy="20" r="2.2" fill="var(--surface)"/></svg>
-    <span><b class="brand-name">البوصلة المهنية</b> · مقياس جاهزية القرار المهني</span>
+    <span><b class="brand-name">البوصلة المهنية</b> · الجاهزية لاتخاذ القرار المهني</span>
   </div>
   <div class="journey" id="journey" hidden></div>
 </header>
@@ -44,17 +44,18 @@
         </svg>
         <div>
           <p class="brand-title">البوصلة المهنية</p>
-          <p class="brand-sub">مقياس جاهزية القرار المهني</p>
+          <p class="brand-sub">الجاهزية لاتخاذ القرار المهني</p>
         </div>
       </div>
       <p class="eyebrow">١٠ دقائق تقريبا</p>
       <h1>قرارك المهني يبدأ من هنا</h1>
-      <p class="lead">في هذه الرحلة القصيرة نتأمل معا ميولك، ومعرفتك بنفسك وبالخيارات من حولك، وما يؤثر في قرارك. وفي ختامها تتضح لك صورة جاهزيتك لاتخاذ قرار مهني سليم، والخطوة التي تناسبك.</p>
+      <p class="lead">في هذه الرحلة القصيرة نتأمل معا معرفتك بنفسك وبالخيارات من حولك، وطريقتك في اتخاذ القرار، وما يؤثر فيه. وفي ختامها تتضح لك صورة جاهزيتك لاتخاذ قرار مهني سليم.</p>
       <ol class="path">
-        <li><span class="stop s1">١</span><div><b>ما يشبهني</b><small>مواقف ونشاطات من حياتك اليومية</small></div></li>
-        <li><span class="stop s2">٢</span><div><b>أعرف نفسي وخياراتي</b><small>قدراتك، ومعلوماتك عن التخصصات والوظائف</small></div></li>
-        <li><span class="stop s3">٣</span><div><b>من يؤثر في قراري</b><small>الأهل والأصدقاء وكل ما يؤثر في اختيارك</small></div></li>
-        <li><span class="stop s4">★</span><div><b>نتيجتي</b><small>صورة واضحة عن وضعك، وخطوتك التالية</small></div></li>
+        <li><span class="stop s1">١</span><div><b>أعرف نفسي وخياراتي</b><small>ما تعرفه عن نفسك، وعن المسارات والمهن</small></div></li>
+        <li><span class="stop s2">٢</span><div><b>كيف أقرر</b><small>المفاضلة والتخطيط والاستعداد للحسم</small></div></li>
+        <li><span class="stop s3">٣</span><div><b>من حولي وقراري</b><small>الأسرة والناس وأثرهم في اختيارك</small></div></li>
+        <li><span class="stop s5">٤</span><div><b>ما قد يقف في طريقي</b><small>ظروف قد تحد من اختيارك</small></div></li>
+        <li><span class="stop s4">★</span><div><b>نتيجتي</b><small>صورة واضحة عن وضعك، وخطوة تبدأ بها</small></div></li>
       </ol>
       <p class="note">لا توجد إجابة صحيحة وأخرى خاطئة. الإجابة الصحيحة هي التي تشبهك.</p>
       <button class="btn primary big" id="btn-start" type="button">يلا نبدأ</button>
@@ -136,52 +137,27 @@
       <div id="save-status"></div>
     </div>
 
-    <div class="card r-ready">
-      <div class="ring-wrap">
-        <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
-          <circle cx="60" cy="60" r="50" class="ring-bg"/>
-          <circle cx="60" cy="60" r="50" class="ring-fg" id="r-ring"/>
-        </svg>
-        <div class="ring-text"><b id="r-cap-score"></b><span>الجاهزية</span></div>
-      </div>
-      <div class="ready-body">
-        <span class="level-pill" id="r-cap-level"></span>
-        <p id="r-cap-text"></p>
-        <div class="bars" id="r-facets"></div>
-      </div>
+    <div class="card" id="card-cap">
+      <h3>قدرتك على اتخاذ القرار كما تراها</h3>
+      <p class="muted">هذه الصورة مبنية على تقديرك أنت لنفسك، وليست اختبارا لقدراتك. كلما طال الشريط كان الجانب أوضح لديك.</p>
+      <div class="bars" id="r-cap"></div>
+      <div class="hl" id="r-hl"></div>
     </div>
 
-    <div class="card" id="card-complexity">
+    <div class="card" id="card-cx">
       <h3>ما يؤثر في قرارك</h3>
-      <p class="muted">ارتفاع هذه المؤشرات يعني أن قرارك محاط بمؤثرات أكثر، لا أنك غير مستعد.</p>
-      <div class="bars" id="r-complexity"></div>
+      <p class="muted" id="r-cx-note"></p>
+      <div class="bars" id="r-cx"></div>
+    </div>
+
+    <div class="card" id="card-barriers">
+      <h3>ما قد يقف في طريقك</h3>
+      <div id="r-barriers"></div>
     </div>
 
     <div class="card r-next">
       <h3>خطوتك التالية</h3>
-      <div class="service" id="r-service"></div>
-      <div id="r-diagnoses"></div>
-    </div>
-
-    <div class="card r-holland">
-      <h3>ميولك</h3>
-      <p class="muted">مرسومة على شكل هولاند السداسي: كلما امتد الشكل نحو جهة، زاد ميلك إليها.</p>
-      <div class="holland-grid">
-        <svg viewBox="-150 -140 300 280" class="hex" id="r-hex" role="img" aria-label="شكل هولاند السداسي لتفضيلاتك"></svg>
-        <div>
-          <div class="code" id="r-code"></div>
-          <p class="code-name" id="r-name"></p>
-          <p id="r-desc"></p>
-          <p class="muted" id="r-consistency"></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>مجالات تستحق الاستكشاف</h3>
-      <p class="muted">مجالات قريبة من تفضيلاتك، تستحق البحث والسؤال عنها.</p>
-      <div class="tags" id="r-sectors"></div>
-      <ul class="specs" id="r-specs"></ul>
+      <div id="r-next"></div>
     </div>
 
     <div class="card">

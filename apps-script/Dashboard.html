@@ -6,228 +6,321 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2433;--muted:#667085;--line:#e4e7ec;--teal:#0e9f8a;--gold:#d98a0b;--rose:#d9364f;--green:#1f9d55;--purple:#6d4fd8;}
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2433;--muted:#667085;--line:#e4e7ec;--teal:#0d8487;--coral:#e8603f;--gold:#c98208;--rose:#d4455c;--green:#1c9a5e}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;padding:16px}
 h1{font-size:20px;font-weight:800;margin-bottom:2px}
-.sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}
-.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px}
+.sub{color:var(--muted);font-size:12.5px;margin-bottom:12px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
 .filters label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--muted);font-weight:700}
 .filters select,.filters input[type=text],.filters input[type=date]{font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:120px}
 .filters .chk{flex-direction:row;align-items:center;gap:5px;font-size:12.5px;color:var(--ink);font-weight:500}
 .btn{font-family:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
 .btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{font-family:inherit;font-size:14px;font-weight:700;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;cursor:pointer;color:var(--muted)}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.view{display:none}.view.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
 .kpi .l{font-size:12px;color:var(--muted);font-weight:700}
 .kpi .v{font-size:24px;font-weight:800;margin-top:2px}
 .kpi .s{font-size:11.5px;color:var(--muted)}
 .progress{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
 .progress div{height:100%;background:var(--teal)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:14px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
 .panel h2{font-size:14px;font-weight:800;margin-bottom:8px}
-.chart{position:relative;height:220px}
+.chart{position:relative;height:240px}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-th{background:#f0f2f5;font-weight:800;position:sticky;top:0;cursor:pointer}
-tr:hover td{background:#f7fbfa;cursor:pointer}
-.tablewrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px}
-.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11.5px;font-weight:700}
-.p-high{background:#e6f6ec;color:var(--green)}.p-medium{background:#fdf3e1;color:var(--gold)}.p-low{background:#fdebee;color:var(--rose)}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:#f0f2f5;font-weight:800;position:sticky;top:0}
+#tbl th{cursor:pointer}
+#tbl tr:hover td{background:#f4faf9;cursor:pointer}
+.tablewrap{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+td.n{font-variant-numeric:tabular-nums;text-align:center}
+.sig{color:var(--coral);font-weight:800}
 .flag{color:var(--rose);font-weight:800}
+.warnc{background:#fdf3e1}
 .empty{padding:30px;text-align:center;color:var(--muted)}
 #detail{display:none;position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:20;overflow:auto;padding:24px}
-#detail .box{background:#fff;max-width:720px;margin:0 auto;border-radius:14px;padding:18px}
-.bar{margin:6px 0}.bar .t{display:flex;justify-content:space-between;font-size:12.5px}.bar .b{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.bar .b div{height:100%}
-.diag{border-right:3px solid var(--teal);background:#f6faf9;border-radius:8px;padding:7px 10px;margin:6px 0;font-size:13px}
-.note{font-size:11.5px;color:var(--muted);margin-top:8px}
-@media print{body{background:#fff;padding:0}.filters,.kpis,.grid,.tablewrap,h1,.sub,#d-actions{display:none!important}#detail{position:static;display:block!important;background:#fff;padding:0}}
+#detail .box{background:#fff;max-width:760px;margin:0 auto;border-radius:14px;padding:18px}
+.bar{margin:6px 0}.bar .t{display:flex;justify-content:space-between;font-size:12.5px;gap:8px}.bar .b{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.bar .b div{height:100%}
+.note{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7}
+.box h2{font-size:14px;margin:12px 0 4px}
+.chipline{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.chipline span{background:#f0f2f5;border-radius:99px;padding:2px 10px;font-size:12px}
+.chipline span.hot{background:#fde6df;color:#b8401f;font-weight:700}
+.facethead{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 6px}
+.facethead b{font-size:14px}
+.facethead span{font-size:12.5px;color:var(--muted)}
+@media print{body{background:#fff;padding:0}.filters,.tabs,.view,h1,.sub,#d-actions{display:none!important}#detail{position:static;display:block!important;background:#fff;padding:0}}
 </style>
 </head>
 <body>
-<h1>لوحة مقياس جاهزية القرار المهني</h1>
+<h1>لوحة البوصلة المهنية</h1>
 <div class="sub" id="sub">جار تحميل البيانات…</div>
 
 <div class="filters">
   <label>المدرسة<select id="f-school"></select></label>
   <label>المرحلة<select id="f-stage"><option value="">الكل</option><option value="intermediate">المتوسطة</option><option value="secondary">الثانوية</option></select></label>
   <label>الصف<select id="f-grade"></select></label>
-  <label>مستوى الجاهزية<select id="f-level"><option value="">الكل</option><option value="high">مرتفعة</option><option value="medium">متوسطة</option><option value="low">تحتاج تطوير</option></select></label>
-  <label>مستوى الخدمة<select id="f-service"></select></label>
   <label>من تاريخ<input type="date" id="f-from"></label>
   <label>إلى تاريخ<input type="date" id="f-to"></label>
   <label>بحث بالاسم<input type="text" id="f-q"></label>
   <label class="chk"><input type="checkbox" id="f-latest" checked>آخر محاولة فقط</label>
   <label class="chk"><input type="checkbox" id="f-notest" checked>استبعاد التجريبي</label>
-  <label class="chk"><input type="checkbox" id="f-quality">استبعاد منخفض الجودة</label>
+  <label class="chk"><input type="checkbox" id="f-quality">استبعاد ما يحتاج مراجعة</label>
+  <label class="chk"><input type="checkbox" id="f-sig">من لديهم إشارات داخلية فقط</label>
   <button class="btn" id="b-reload">تحديث</button>
   <button class="btn primary" id="b-export">تصدير المعروض إلى ورقة</button>
 </div>
 
-<div class="kpis" id="kpis"></div>
-
-<div class="grid">
-  <div class="panel"><h2>مستويات الجاهزية</h2><div class="chart"><canvas id="c-levels"></canvas></div></div>
-  <div class="panel"><h2>مستويات الخدمة</h2><div class="chart"><canvas id="c-service"></canvas></div></div>
-  <div class="panel"><h2>النمط الأعلى في هولاند</h2><div class="chart"><canvas id="c-holland"></canvas></div></div>
-  <div class="panel"><h2>متوسط الجوانب حسب المرحلة</h2><div class="chart"><canvas id="c-facets"></canvas></div></div>
+<div class="tabs">
+  <button class="tab on" data-v="v-over">نظرة عامة</button>
+  <button class="tab" data-v="v-list">الطلبة</button>
+  <button class="tab" data-v="v-items">تحليل البنود</button>
 </div>
 
-<div class="panel">
-  <h2 id="t-title">الطالبات</h2>
-  <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-  <p class="note">اضغطي على أي صف لعرض تقرير الطالبة وطباعته. «منخفض الجودة» يعني: فشل سؤال التركيز، أو إجابات متطابقة تقريبا، أو سرعة غير طبيعية.</p>
+<div class="view on" id="v-over">
+  <div class="kpis" id="kpis"></div>
+  <div class="grid">
+    <div class="panel"><h2>القدرة المدركة: متوسط الجوانب (1–5)</h2><div class="chart"><canvas id="c-cap"></canvas></div></div>
+    <div class="panel"><h2>ملف تعقيد سياق القرار: متوسط الجوانب (1–5)</h2><div class="chart"><canvas id="c-cx"></canvas></div></div>
+    <div class="panel"><h2>انتشار العوائق: نسبة من أجاب 3 أو 4</h2><div class="chart"><canvas id="c-bar"></canvas></div></div>
+    <div class="panel"><h2>الاستجابات حسب المدرسة</h2><div class="chart"><canvas id="c-school"></canvas></div></div>
+  </div>
+  <p class="note">النتائج ملف وصفي في مرحلة التطوير. لا توجد مستويات ولا درجات قطع معتمدة. «الإشارة الداخلية» تظهر هنا فقط، ولا تعرض للطلبة: جانب من ملف التعقيد متوسطه 4 فأكثر، أو عائق «كبير». العتبة مؤقتة وتراجع بعد التجربة الاستطلاعية.</p>
+</div>
+
+<div class="view" id="v-list">
+  <div class="panel">
+    <h2 id="t-title">الطلبة</h2>
+    <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+    <p class="note">اضغطي على أي صف لعرض تقرير الطالبة وطباعته. «يحتاج مراجعة» يعني: خطأ في عبارة التركيز، أو 90% فأكثر من الإجابات بالقيمة نفسها، أو أقل من ثانيتين للعبارة في المتوسط.</p>
+  </div>
+</div>
+
+<div class="view" id="v-items">
+  <div class="panel">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:12px;font-weight:700;color:var(--muted)">النسخة
+        <select id="ia-stage" class="btn"><option value="intermediate">المتوسطة</option><option value="secondary">الثانوية</option></select></label>
+      <span class="note" id="ia-n" style="margin:0"></span>
+    </div>
+    <div id="ia"></div>
+    <p class="note">مؤشرات أولية للتجربة الاستطلاعية تُحسب على المعروض حسب الفلاتر، ولكل نسخة على حدة. الدرجات بعد قلب البند العكسي. ألفا هنا للفحص السريع فقط؛ الثبات المعتمد في الخطة معامل أوميغا، والبنية بالتحليل العاملي على الارتباطات متعددة الحدود. الخلايا الملونة للمراجعة: ارتباط مصحح أقل من 0.30، أو أكثر من 80% في أعلى بديل أو أدناه.</p>
+  </div>
 </div>
 
 <div id="detail"><div class="box" id="d-box"></div></div>
 
 <script>
-var META = {"facets": [{"id": "self_knowledge", "label": "معرفة الذات", "dimension": "capability"}, {"id": "options_knowledge", "label": "معرفة الخيارات الدراسية والمهنية", "dimension": "capability"}, {"id": "labor_market", "label": "معرفة سوق العمل", "dimension": "capability"}, {"id": "decision_skills", "label": "مهارات القرار والتخطيط", "dimension": "capability"}, {"id": "readiness", "label": "الاستعداد والثقة بالقرار", "dimension": "capability"}, {"id": "decision_source", "label": "مصدر القرار", "dimension": "complexity"}, {"id": "family_fit", "label": "التوافق مع الأسرة", "dimension": "complexity"}, {"id": "prestige", "label": "أثر الشيوع والمكانة", "dimension": "complexity"}, {"id": "constraints", "label": "القيود الخارجية", "dimension": "complexity"}], "diagnoses": {"self_info": {"label": "نقص المعلومات عن الذات", "recommendation": "أنشطة استكشاف ذاتي مع جلسة تفسير قصيرة", "serviceHint": "brief"}, "occ_info": {"label": "نقص المعلومات عن المهن", "recommendation": "ورشة استكشاف التخصصات والمهن، ولقاءات مع مهنيين", "serviceHint": "brief"}, "ways_info": {"label": "نقص المعلومات عن طرق الحصول عليها", "recommendation": "تعريف بمصادر المعلومات الموثوقة وكيفية البحث", "serviceHint": "self"}, "unreliable": {"label": "معلومات غير موثوقة أو متضاربة", "recommendation": "جلسة لتقييم المعلومات وفرزها مع المرشد", "serviceHint": "brief"}, "process_info": {"label": "نقص المعلومات عن عملية القرار", "recommendation": "برنامج جماعي في مهارات اتخاذ القرار", "serviceHint": "brief"}, "motivation": {"label": "عدم الاستعداد: ضعف الدافعية", "recommendation": "جلسة قصيرة لربط القرار بأهداف الطالب القريبة", "serviceHint": "brief"}, "indecisive": {"label": "عدم الاستعداد: التردد العام", "recommendation": "إرشاد فردي", "serviceHint": "individual"}, "beliefs": {"label": "عدم الاستعداد: معتقدات غير وظيفية", "recommendation": "جلسات جماعية لمناقشة المعتقدات حول القرار المهني", "serviceHint": "brief"}, "dependence": {"label": "الاعتماد على الآخرين في القرار", "recommendation": "تدريب على مهارات القرار الذاتي مع إشراك الأسرة", "serviceHint": "brief"}, "external_conflict": {"label": "تعارض خارجي مع الأسرة", "recommendation": "جلسة إرشادية بحضور ولي الأمر", "serviceHint": "individual"}, "shared_ok": {"label": "قرار مشترك متوافق مع الأسرة", "recommendation": "لا يحتاج تدخلا خاصا", "serviceHint": "self"}, "internal_conflict": {"label": "تعارض داخلي بين الرغبة والمكانة", "recommendation": "جلسة توضيح القيم والأولويات", "serviceHint": "brief"}, "constraints": {"label": "قيود خارجية (المعدل، المكان، الظروف)", "recommendation": "إرشاد فردي وبدائل واقعية", "serviceHint": "individual"}, "none": {"label": "لا توجد صعوبة واضحة", "recommendation": "لا يحتاج تدخلا خاصا", "serviceHint": "self"}}, "services": {"self": "خدمة ذاتية", "brief": "خدمة موجزة بمساعدة المرشد", "brief_group": "خدمة موجزة جماعية", "individual": "إدارة حالة فردية"}};
+var META = {"instrument": "draft4", "scales": {"agree": ["لا تنطبق علي إطلاقا", "تنطبق علي بدرجة قليلة", "تنطبق علي بدرجة متوسطة", "تنطبق علي بدرجة كبيرة", "تنطبق علي تماما"], "barrier": ["لا يمثل عائقا", "يمثل عائقا بسيطا", "يمثل عائقا متوسطا", "يمثل عائقا كبيرا"]}, "facets": [{"id": "SK", "label": "معرفة الذات", "component": "capability"}, {"id": "OK", "label": "معرفة الخيارات", "component": "capability"}, {"id": "LM", "label": "سوق العمل ومصادر المعلومات", "component": "capability"}, {"id": "DS", "label": "مهارات القرار والتخطيط", "component": "capability"}, {"id": "RC", "label": "الاستعداد والثقة في اتخاذ القرار", "component": "capability"}, {"id": "SR", "label": "الاعتماد على المرجعيات الخارجية", "component": "complexity"}, {"id": "FF", "label": "الضغط وعدم التوافق الأسري", "component": "complexity"}, {"id": "PR", "label": "التأثر الاجتماعي والمكانة", "component": "complexity"}, {"id": "CN", "label": "مؤشرات العوائق", "component": "barriers"}, {"id": "SP", "label": "مؤشرات الدعم المحيط بالقرار", "component": "support"}], "items": [{"id": "SK1", "text": "أعرف المواد الدراسية التي أتفوق فيها.", "facet": "SK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SK2", "text": "أستطيع تحديد المهارات التي أجيدها.", "facet": "SK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SK3", "text": "أعرف الأنشطة التي أستمتع بها أكثر من غيرها.", "facet": "SK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SK4", "text": "أعرف ما يهمني في العمل الذي أريده مستقبلا.", "facet": "SK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SK5", "text": "أستطيع أن أشرح لماذا يناسبني مجال معين أكثر من غيره.", "facet": "SK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SK6", "text": "أعرف الجوانب التي أحتاج إلى تطويرها قبل اختيار مساري.", "facet": "SK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "OK1", "text": "أعرف المسارات الدراسية المتاحة لي في المرحلة القادمة.", "facet": "OK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "OK2", "text": "أعرف ما يُدرس في المسار أو التخصص الذي يهمني.", "facet": "OK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "OK3", "text": "أعرف شروط القبول في التخصص الذي أفكر فيه.", "facet": "OK", "stage": "secondary", "role": "scored", "scale": "agree"}, {"id": "OK4", "text": "أستطيع أن أذكر أكثر من خيار دراسي يناسبني.", "facet": "OK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "OK5", "text": "أعرف الفروق الأساسية بين تخصصين متقاربين أفكر فيهما.", "facet": "OK", "stage": "secondary", "role": "scored", "scale": "agree"}, {"id": "OK6", "text": "أعرف المهن التي قد تقود إليها المسارات أو التخصصات التي تهمني.", "facet": "OK", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "OK7", "text": "أعرف الفروق الأساسية بين مسارات المرحلة الثانوية.", "facet": "OK", "stage": "intermediate", "role": "scored", "scale": "agree"}, {"id": "OK8", "text": "أعرف المسار الثانوي الأقرب إلى اهتماماتي.", "facet": "OK", "stage": "intermediate", "role": "scored", "scale": "agree"}, {"id": "LM1", "text": "أعرف أين أجد معلومات موثوقة عن التخصصات والمهن.", "facet": "LM", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "LM2", "text": "أعرف أمثلة على مهن مطلوبة في المملكة.", "facet": "LM", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "LM3", "text": "أعرف طبيعة العمل اليومي في المهنة التي تهمني.", "facet": "LM", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "LM4", "text": "أستطيع التحقق من موثوقية المعلومات التي أجدها عن التخصصات والمهن.", "facet": "LM", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "LM5", "text": "أعرف المهارات التي يطلبها سوق العمل في المجال الذي يهمني.", "facet": "LM", "stage": "secondary", "role": "scored", "scale": "agree"}, {"id": "LM6", "text": "أبحث بنفسي عن معلومات عن المهن التي تهمني.", "facet": "LM", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "LM7", "text": "أعرف مهنا ترتبط بالمواد الدراسية التي أحبها.", "facet": "LM", "stage": "intermediate", "role": "scored", "scale": "agree"}, {"id": "DS1", "text": "عند المفاضلة بين خيارين دراسيين، أقارن بين مزايا كل منهما وتحدياته.", "facet": "DS", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "DS2", "text": "أعرف الخطوات التي أحتاجها لاتخاذ قرار دراسي أو مهني.", "facet": "DS", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "DS3", "text": "وضعت خطة، ولو بسيطة، لما أريد دراسته مستقبلا.", "facet": "DS", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "DS4", "text": "أستطيع أن أحدد ما أحتاج إلى معرفته قبل أن أقرر.", "facet": "DS", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "DS5", "text": "أضع لنفسي أهدافا دراسية أسعى إلى تحقيقها.", "facet": "DS", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "DS6", "text": "إذا لم تنجح خطتي الأولى، أعرف ما البديل.", "facet": "DS", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "DS7", "text": "أعرف كيف أستكشف مجالا جديدا قبل أن أختاره.", "facet": "DS", "stage": "intermediate", "role": "scored", "scale": "agree"}, {"id": "RC1", "text": "أثق بقدرتي على اختيار ما يناسبني دراسيا ومهنيا.", "facet": "RC", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "RC2", "text": "أخصص وقتا للتفكير المنظم في مستقبلي الدراسي والمهني.", "facet": "RC", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "RC3", "text": "أستطيع أن أتخذ قراري دون أن أنتظر اليقين التام.", "facet": "RC", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "RC4", "text": "أؤجل التفكير في مستقبلي المهني.", "facet": "RC", "stage": "both", "role": "scored", "scale": "agree", "reverse": true}, {"id": "RC7", "text": "أشعر بالاستعداد للانتقال من مقارنة الخيارات إلى اختيار أحدها.", "facet": "RC", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "RC8", "text": "أستطيع حسم اختياري عندما تتوافر لدي معلومات كافية.", "facet": "RC", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SR1", "text": "أترك لغيري تحديد ما سأدرسه.", "facet": "SR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SR2", "text": "أنتظر أن يقرر أهلي عني ما أدرسه.", "facet": "SR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SR3", "text": "أميل إلى اختيار ما يختاره أصدقائي.", "facet": "SR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SR4", "text": "لا أطمئن لقراري حتى يوافق عليه شخص آخر.", "facet": "SR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "SR7", "text": "أغير اختياري إذا خالف رأي شخص مهم لي.", "facet": "SR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "FF1", "text": "يريد أهلي لي مسارا أو تخصصا غير الذي أرغب فيه.", "facet": "FF", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "FF2", "text": "أشعر بضغط من أسرتي في اختيار مساري أو تخصصي.", "facet": "FF", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "FF3", "text": "أتجنب الحديث مع أسرتي عن رغبتي الدراسية.", "facet": "FF", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "FF5", "text": "أخشى أن أخيب ظن أسرتي إذا اخترت المسار أو التخصص الذي أريده.", "facet": "FF", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "PR1", "text": "أفضل المسارات أو التخصصات التي يراها الناس أكثر مكانة من غيرها.", "facet": "PR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "PR2", "text": "يهمني رأي الناس في المسار أو التخصص الذي سأختاره.", "facet": "PR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "PR3", "text": "أميل إلى المسار أو التخصص المنتشر بين من حولي.", "facet": "PR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "PR4", "text": "أترك مسارا أو تخصصا أحبه إذا كان الناس لا يقدرونه.", "facet": "PR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "PR5", "text": "أختار ما يضمن لي مكانة اجتماعية حتى لو لم أرغب فيه.", "facet": "PR", "stage": "both", "role": "scored", "scale": "agree"}, {"id": "CN1", "text": "معدلي الدراسي الحالي.", "facet": "CN", "stage": "both", "role": "barrier", "scale": "barrier"}, {"id": "CN2", "text": "عدم توفر التخصص الذي أريده في مدينتي.", "facet": "CN", "stage": "secondary", "role": "barrier", "scale": "barrier"}, {"id": "CN3", "text": "الظروف المادية لأسرتي.", "facet": "CN", "stage": "both", "role": "barrier", "scale": "barrier"}, {"id": "CN4", "text": "صعوبة الدراسة خارج مدينتي.", "facet": "CN", "stage": "secondary", "role": "barrier", "scale": "barrier"}, {"id": "CN5", "text": "ظروف أخرى لا أتحكم فيها.", "facet": "CN", "stage": "both", "role": "barrier", "scale": "barrier", "excludeFromCount": true}, {"id": "CN6", "text": "بعد مكان الدراسة عن مكان سكني.", "facet": "CN", "stage": "both", "role": "barrier", "scale": "barrier"}, {"id": "CN7", "text": "اختلاف آراء أفراد أسرتي في ما يناسبني.", "facet": "CN", "stage": "both", "role": "barrier", "scale": "barrier"}, {"id": "SP1", "text": "أشارك أهلي رأيي، لكن القرار في النهاية قراري.", "facet": "SP", "stage": "both", "role": "support", "scale": "agree"}, {"id": "SP2", "text": "تدعم أسرتي ما أرغب في دراسته.", "facet": "SP", "stage": "both", "role": "support", "scale": "agree"}, {"id": "AT1", "text": "هذه العبارة للتأكد من التركيز: الإجابة المطلوبة هنا «تنطبق علي بدرجة كبيرة».", "facet": "AT", "stage": "both", "role": "attention", "scale": "agree"}, {"id": "AT2", "text": "هذه العبارة للتأكد من التركيز: الإجابة المطلوبة هنا «لا تنطبق علي إطلاقا».", "facet": "AT", "stage": "both", "role": "attention", "scale": "agree"}]};
 var STAGE = { intermediate: 'المتوسطة', secondary: 'الثانوية' };
-var LV = { high: 'مرتفعة', medium: 'متوسطة', low: 'تحتاج تطوير' };
-var SV = META.services;
-var HL = { R: 'واقعي', I: 'بحثي', A: 'فني', S: 'اجتماعي', E: 'مبادر', C: 'تقليدي' };
 var TARGET = { total: 1000, intermediate: 500, secondary: 500 };
+var SIG = 4;
 var RAW = [], ROWS = [], CHARTS = {}, SORT = { k: 'received_at', d: -1 };
+var FAC = {}; META.facets.forEach(function (f) { FAC[f.id] = f; });
+var ITEM = {}; META.items.forEach(function (i) { ITEM[i.id] = i; });
+var CAP = META.facets.filter(function (f) { return f.component === 'capability'; });
+var CX = META.facets.filter(function (f) { return f.component === 'complexity'; });
+var BARS = META.items.filter(function (i) { return i.role === 'barrier'; });
 
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function num(v) { return v === '' || v == null || isNaN(Number(v)) ? null : Number(v); }
-function lowQuality(r) { return String(r.attention_pass) === '0' || String(r.straightline) === '1' || String(r.fast) === '1'; }
+function f2(v) { return v == null ? '—' : (Math.round(v * 100) / 100).toFixed(2); }
+function needsReview(r) { return String(r.attention_pass) === '0' || String(r.straightline) === '1' || String(r.fast) === '1'; }
+function applies(i, stage) { return i.stage === 'both' || i.stage === stage; }
+function signals(r) {
+  var s = [];
+  CX.forEach(function (f) { if (num(r['f_' + f.id]) >= SIG) s.push(f.label); });
+  var big = String(r.barrier_big || '').split(' ').filter(function (id) { return ITEM[id]; });
+  if (big.length) s.push(big.length === 1 ? 'عائق كبير: ' + ITEM[big[0]].text.replace(/\.$/, '') : big.length + ' عوائق بدرجة «كبير»');
+  return s;
+}
 
 function load() {
   $('sub').textContent = 'جار تحميل البيانات…';
   google.script.run.withSuccessHandler(function (d) {
-    RAW = d.rows.map(function (row) { var o = {}; d.header.forEach(function (h, i) { o[h] = row[i]; }); return o; });
-    RAW.forEach(function (r) { r._latest = true; });
+    var all = d.rows.map(function (row) { var o = {}; d.header.forEach(function (h, i) { o[h] = row[i]; }); return o; });
+    RAW = all.filter(function (r) { return r.instrument === META.instrument; });
     var maxAttempt = {};
     RAW.forEach(function (r) { var k = r.student_key; if (!maxAttempt[k] || Number(r.attempt) > maxAttempt[k]) maxAttempt[k] = Number(r.attempt); });
     RAW.forEach(function (r) { r._latest = Number(r.attempt) === maxAttempt[r.student_key]; });
     fillFilters();
     apply();
-    $('sub').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-SA') + ' · إجمالي السجلات في الملف: ' + RAW.length;
+    $('sub').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-SA') + ' · سجلات هذه النسخة من الأداة: ' + RAW.length + (all.length > RAW.length ? ' · سجلات نسخ سابقة مستبعدة: ' + (all.length - RAW.length) : '');
   }).withFailureHandler(function (e) { $('sub').textContent = 'تعذر تحميل البيانات: ' + e.message; }).getData();
 }
 
-function opts(sel, values, labels) {
+function opts(sel, values) {
   var cur = sel.value;
-  sel.innerHTML = '<option value="">الكل</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(labels ? labels[v] || v : v) + '</option>'; }).join('');
+  sel.innerHTML = '<option value="">الكل</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
   sel.value = values.indexOf(cur) >= 0 ? cur : '';
 }
 function uniq(k) { return RAW.map(function (r) { return r[k]; }).filter(function (v, i, a) { return v !== '' && a.indexOf(v) === i; }).sort(); }
-function fillFilters() {
-  opts($('f-school'), uniq('school'));
-  opts($('f-grade'), uniq('grade'));
-  opts($('f-service'), Object.keys(SV), SV);
-}
+function fillFilters() { opts($('f-school'), uniq('school')); opts($('f-grade'), uniq('grade')); }
 
 function apply() {
-  var f = { school: $('f-school').value, stage: $('f-stage').value, grade: $('f-grade').value, level: $('f-level').value, service: $('f-service').value,
-    from: $('f-from').value, to: $('f-to').value, q: $('f-q').value.trim(), latest: $('f-latest').checked, notest: $('f-notest').checked, quality: $('f-quality').checked };
+  var f = { school: $('f-school').value, stage: $('f-stage').value, grade: $('f-grade').value, from: $('f-from').value, to: $('f-to').value,
+    q: $('f-q').value.trim(), latest: $('f-latest').checked, notest: $('f-notest').checked, quality: $('f-quality').checked, sig: $('f-sig').checked };
   ROWS = RAW.filter(function (r) {
     if (f.latest && !r._latest) return false;
     if (f.notest && String(r.test) === '1') return false;
-    if (f.quality && lowQuality(r)) return false;
+    if (f.quality && needsReview(r)) return false;
+    if (f.sig && !signals(r).length) return false;
     if (f.school && r.school !== f.school) return false;
     if (f.stage && r.stage !== f.stage) return false;
     if (f.grade && r.grade !== f.grade) return false;
-    if (f.level && r.cap_level !== f.level) return false;
-    if (f.service && r.service_level !== f.service) return false;
     var d = String(r.received_at || '').slice(0, 10);
     if (f.from && d < f.from) return false;
     if (f.to && d > f.to) return false;
     if (f.q && String(r.name).indexOf(f.q) === -1) return false;
     return true;
   });
-  kpis(); charts(); table();
+  kpis(); charts(); table(); itemAnalysis();
 }
 
-function pct(n, d) { return d ? Math.round(n / d * 100) + '%' : '—'; }
+function median(a) { if (!a.length) return null; var s = a.slice().sort(function (x, y) { return x - y; }); var m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
 function kpis() {
-  var n = ROWS.length;
-  var st = { intermediate: 0, secondary: 0 }, lv = { high: 0, medium: 0, low: 0 }, ind = 0, lq = 0;
-  ROWS.forEach(function (r) { if (st[r.stage] != null) st[r.stage]++; if (lv[r.cap_level] != null) lv[r.cap_level]++; if (r.service_level === 'individual') ind++; if (lowQuality(r)) lq++; });
+  var n = ROWS.length, rev = 0, sig = 0, att = 0, attN = 0;
+  ROWS.forEach(function (r) { if (needsReview(r)) rev++; if (signals(r).length) sig++; if (r.attention_pass !== '' && r.attention_pass != null) { attN++; if (String(r.attention_pass) === '1') att++; } });
   var all = RAW.filter(function (r) { return r._latest && String(r.test) !== '1'; });
-  var allSt = { intermediate: 0, secondary: 0 }; all.forEach(function (r) { if (allSt[r.stage] != null) allSt[r.stage]++; });
+  var st = { intermediate: 0, secondary: 0 }; all.forEach(function (r) { if (st[r.stage] != null) st[r.stage]++; });
+  var dur = median(ROWS.map(function (r) { return num(r.duration_sec); }).filter(function (x) { return x != null; }));
   function card(l, v, s, prog) { return '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="s">' + (s || '') + '</div>' + (prog != null ? '<div class="progress"><div style="width:' + Math.min(100, prog) + '%"></div></div>' : '') + '</div>'; }
   $('kpis').innerHTML =
     card('المعروض الآن', n, 'حسب الفلاتر') +
-    card('التقدم نحو 1000', all.length, 'المتوسط ' + allSt.intermediate + ' / 500 · الثانوي ' + allSt.secondary + ' / 500', all.length / TARGET.total * 100) +
-    card('جاهزية مرتفعة', pct(lv.high, n), lv.high + ' طالبة') +
-    card('جاهزية متوسطة', pct(lv.medium, n), lv.medium + ' طالبة') +
-    card('تحتاج تطوير', pct(lv.low, n), lv.low + ' طالبة') +
-    card('إدارة حالة فردية', ind, 'تحتاج متابعة فردية') +
-    card('منخفضة الجودة', lq, 'تراجع قبل التحليل');
+    card('التقدم نحو 1000', all.length, 'المتوسطة ' + st.intermediate + ' / 500 · الثانوية ' + st.secondary + ' / 500', all.length / TARGET.total * 100) +
+    card('وسيط مدة التطبيق', dur == null ? '—' : (dur / 60).toFixed(1) + ' د', 'بالدقائق') +
+    card('اجتياز عبارتي التركيز', attN ? Math.round(att / attN * 100) + '%' : '—', att + ' من ' + attN) +
+    card('يحتاج مراجعة', rev, 'قبل التحليل') +
+    card('إشارات داخلية', sig, 'للمرشدة فقط');
 }
 
-function chart(id, type, labels, datasets, extra) {
-  if (CHARTS[id]) CHARTS[id].destroy();
-  CHARTS[id] = new Chart($(id), Object.assign({ type: type, data: { labels: labels, datasets: datasets },
-    options: { maintainAspectRatio: false, plugins: { legend: { display: type === 'doughnut' || datasets.length > 1, position: 'bottom', labels: { font: { family: 'Tajawal' } } } },
-      scales: type === 'doughnut' ? {} : { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { font: { family: 'Tajawal' } } } } } }, extra || {}));
-}
-function count(k, keys) { var c = {}; keys.forEach(function (x) { c[x] = 0; }); ROWS.forEach(function (r) { if (c[r[k]] != null) c[r[k]]++; }); return keys.map(function (x) { return c[x]; }); }
-function charts() {
+function chart(id, type, labels, datasets, yopts, horizontal) {
   if (typeof Chart === 'undefined') return;
-  chart('c-levels', 'doughnut', ['مرتفعة', 'متوسطة', 'تحتاج تطوير'], [{ data: count('cap_level', ['high', 'medium', 'low']), backgroundColor: ['#1f9d55', '#d98a0b', '#d9364f'] }]);
-  var sk = Object.keys(SV);
-  chart('c-service', 'bar', sk.map(function (k) { return SV[k]; }), [{ data: count('service_level', sk), backgroundColor: '#6d4fd8' }]);
-  var hk = ['R', 'I', 'A', 'S', 'E', 'C'];
-  chart('c-holland', 'bar', hk.map(function (k) { return HL[k] + ' ' + k; }), [{ data: count('holland_top', hk), backgroundColor: '#0e9f8a' }]);
-  var fk = META.facets.filter(function (f) { return ROWS.some(function (r) { return num(r['facet_' + f.id]) != null; }); });
-  function mean(stage, f) { var v = ROWS.filter(function (r) { return r.stage === stage; }).map(function (r) { return num(r['facet_' + f.id]); }).filter(function (x) { return x != null; }); return v.length ? Math.round(v.reduce(function (a, b) { return a + b; }, 0) / v.length) : null; }
-  chart('c-facets', 'bar', fk.map(function (f) { return f.label; }),
-    [{ label: 'المتوسطة', data: fk.map(function (f) { return mean('intermediate', f); }), backgroundColor: '#d98a0b' },
-     { label: 'الثانوية', data: fk.map(function (f) { return mean('secondary', f); }), backgroundColor: '#0e9f8a' }],
-    { options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } }, plugins: { legend: { position: 'bottom' } } } });
+  if (CHARTS[id]) CHARTS[id].destroy();
+  var axis = horizontal ? 'x' : 'y';
+  var scales = {}; scales[axis] = Object.assign({ beginAtZero: true, ticks: { precision: 0 } }, yopts || {});
+  scales[horizontal ? 'y' : 'x'] = { ticks: { font: { family: 'Tajawal' }, autoSkip: false } };
+  CHARTS[id] = new Chart($(id), { type: type, data: { labels: labels, datasets: datasets },
+    options: { indexAxis: horizontal ? 'y' : 'x', maintainAspectRatio: false, scales: scales,
+      plugins: { legend: { display: datasets.length > 1, position: 'bottom', labels: { font: { family: 'Tajawal' } } } } } });
+}
+function meanOf(rows, key) { var v = rows.map(function (r) { return num(r[key]); }).filter(function (x) { return x != null; }); return v.length ? Math.round(v.reduce(function (a, b) { return a + b; }, 0) / v.length * 100) / 100 : null; }
+function byStage(stage) { return ROWS.filter(function (r) { return r.stage === stage; }); }
+function charts() {
+  var I = byStage('intermediate'), S = byStage('secondary');
+  function ds(fs) { return [{ label: 'المتوسطة', data: fs.map(function (f) { return meanOf(I, 'f_' + f.id); }), backgroundColor: '#c98208' },
+    { label: 'الثانوية', data: fs.map(function (f) { return meanOf(S, 'f_' + f.id); }), backgroundColor: '#0d8487' }]; }
+  chart('c-cap', 'bar', CAP.map(function (f) { return f.label; }), ds(CAP), { min: 1, max: 5, beginAtZero: false });
+  chart('c-cx', 'bar', CX.map(function (f) { return f.label; }), ds(CX), { min: 1, max: 5, beginAtZero: false });
+  function prev(rows, it) { var a = rows.filter(function (r) { return applies(it, r.stage) && num(r['i_' + it.id]) != null; }); if (!a.length) return null; return Math.round(a.filter(function (r) { return num(r['i_' + it.id]) >= 3; }).length / a.length * 100); }
+  chart('c-bar', 'bar', BARS.map(function (i) { return i.text.replace(/\.$/, ''); }),
+    [{ label: 'المتوسطة', data: BARS.map(function (i) { return prev(I, i); }), backgroundColor: '#c98208' },
+     { label: 'الثانوية', data: BARS.map(function (i) { return prev(S, i); }), backgroundColor: '#e8603f' }], { min: 0, max: 100 }, true);
+  var schools = uniq('school');
+  chart('c-school', 'bar', schools, [{ label: 'عدد', data: schools.map(function (s) { return ROWS.filter(function (r) { return r.school === s; }).length; }), backgroundColor: '#1d2433' }]);
 }
 
-var COLS = [
-  ['name', 'الاسم'], ['school', 'المدرسة'], ['grade', 'الصف'], ['cap_score', 'الجاهزية %'], ['cap_level', 'المستوى'],
-  ['service_level', 'الخدمة'], ['holland_code', 'هولاند'], ['diagnoses', 'التشخيص'], ['_q', 'الجودة'], ['attempt', 'المحاولة'], ['received_at', 'التاريخ']
-];
+var COLS = [['name', 'الاسم'], ['school', 'المدرسة'], ['grade', 'الصف']]
+  .concat(CAP.map(function (f) { return ['f_' + f.id, f.id]; })).concat(CX.map(function (f) { return ['f_' + f.id, f.id]; }))
+  .concat([['_bar', 'العوائق'], ['_sig', 'إشارات'], ['_q', 'الجودة'], ['attempt', 'المحاولة'], ['received_at', 'التاريخ']]);
 function cell(r, k) {
-  if (k === 'cap_level') return r.cap_level ? '<span class="pill p-' + esc(r.cap_level) + '">' + esc(LV[r.cap_level]) + '</span>' : '';
-  if (k === 'service_level') return esc(SV[r.service_level] || '');
-  if (k === 'diagnoses') return esc(diagLabels(r).join('، '));
-  if (k === '_q') return lowQuality(r) ? '<span class="flag">مراجعة</span>' : '✓';
+  if (k.indexOf('f_') === 0) { var v = num(r[k]); var hot = CX.some(function (f) { return 'f_' + f.id === k; }) && v >= SIG; return '<span class="' + (hot ? 'sig' : '') + '">' + f2(v) + '</span>'; }
+  if (k === '_bar') return esc((r.barrier_count === '' ? '—' : r.barrier_count) + ' من ' + r.barrier_total);
+  if (k === '_sig') { var n = signals(r).length; return n ? '<span class="sig">' + n + '</span>' : ''; }
+  if (k === '_q') return needsReview(r) ? '<span class="flag">يحتاج مراجعة</span>' : '✓';
   if (k === 'received_at') return esc(String(r.received_at).slice(0, 10));
-  if (k === 'cap_score') return num(r.cap_score) == null ? '' : Math.round(num(r.cap_score));
   return esc(r[k]);
 }
-function diagLabels(r) {
-  return String(r.diagnoses || '').split(' ').filter(function (c, i, a) { return c && a.indexOf(c) === i && c !== 'none' && c !== 'shared_ok'; })
-    .map(function (c) { return META.diagnoses[c] ? META.diagnoses[c].label : c; });
-}
+function sortVal(r, k) { if (k === '_sig') return signals(r).length; if (k === '_bar') return num(r.barrier_count); if (k === '_q') return needsReview(r) ? 1 : 0; return r[k]; }
 function table() {
-  var rows = ROWS.slice().sort(function (a, b) { var x = a[SORT.k], y = b[SORT.k]; var nx = num(x), ny = num(y); if (nx != null && ny != null) { x = nx; y = ny; } return (x > y ? 1 : x < y ? -1 : 0) * SORT.d; });
-  $('t-title').textContent = 'الطالبات (' + rows.length + ')';
-  $('tbl').querySelector('thead').innerHTML = '<tr>' + COLS.map(function (c) { return '<th data-k="' + c[0] + '">' + c[1] + (SORT.k === c[0] ? (SORT.d > 0 ? ' ▲' : ' ▼') : '') + '</th>'; }).join('') + '</tr>';
-  $('tbl').querySelector('tbody').innerHTML = rows.length ? rows.map(function (r) { return '<tr data-id="' + esc(r.submission_id) + '">' + COLS.map(function (c) { return '<td>' + cell(r, c[0]) + '</td>'; }).join('') + '</tr>'; }).join('')
+  var rows = ROWS.slice().sort(function (a, b) { var x = sortVal(a, SORT.k), y = sortVal(b, SORT.k); var nx = num(x), ny = num(y); if (nx != null && ny != null) { x = nx; y = ny; } return (x > y ? 1 : x < y ? -1 : 0) * SORT.d; });
+  $('t-title').textContent = 'الطلبة (' + rows.length + ')';
+  $('tbl').querySelector('thead').innerHTML = '<tr>' + COLS.map(function (c) { var t = FAC[c[1]] ? FAC[c[1]].label : c[1]; return '<th data-k="' + c[0] + '" title="' + esc(t) + '">' + esc(c[1]) + (SORT.k === c[0] ? (SORT.d > 0 ? ' ▲' : ' ▼') : '') + '</th>'; }).join('') + '</tr>';
+  $('tbl').querySelector('tbody').innerHTML = rows.length ? rows.map(function (r) { return '<tr data-id="' + esc(r.submission_id) + '">' + COLS.map(function (c) { return '<td class="' + (c[0].indexOf('f_') === 0 ? 'n' : '') + '">' + cell(r, c[0]) + '</td>'; }).join('') + '</tr>'; }).join('')
     : '<tr><td colspan="' + COLS.length + '" class="empty">لا توجد سجلات بهذه الفلاتر</td></tr>';
 }
 
-function bar(label, v) {
-  var c = v >= 70 ? '#1f9d55' : v >= 45 ? '#d98a0b' : '#d9364f';
-  return '<div class="bar"><div class="t"><span>' + esc(label) + '</span><span>' + (v == null ? '—' : Math.round(v) + '%') + '</span></div><div class="b"><div style="width:' + (v || 0) + '%;background:' + c + '"></div></div></div>';
+function bar(label, v, color) {
+  return '<div class="bar"><div class="t"><span>' + esc(label) + '</span><span>' + f2(v) + '</span></div><div class="b"><div style="width:' + (v == null ? 0 : (v - 1) / 4 * 100) + '%;background:' + color + '"></div></div></div>';
 }
 function detail(id) {
   var r = RAW.filter(function (x) { return x.submission_id === id; })[0];
   if (!r) return;
-  var facets = META.facets.filter(function (f) { return num(r['facet_' + f.id]) != null; });
-  var diags = String(r.diagnoses || '').split(' ').filter(function (c, i, a) { return c && a.indexOf(c) === i && META.diagnoses[c] && c !== 'none' && c !== 'shared_ok'; });
+  var agree = META.scales.agree, barrier = META.scales.barrier;
+  var bl = BARS.filter(function (i) { return applies(i, r.stage); }).map(function (i) {
+    var v = num(r['i_' + i.id]); return '<span class="' + (v >= 3 ? 'hot' : '') + '">' + esc(i.text.replace(/\.$/, '')) + ': ' + esc(v ? barrier[v - 1] : '—') + '</span>'; }).join('');
+  var sp = META.items.filter(function (i) { return i.role === 'support'; }).map(function (i) {
+    var v = num(r['i_' + i.id]); return '<span>' + esc(i.text.replace(/\.$/, '')) + ': ' + esc(v ? agree[v - 1] : '—') + '</span>'; }).join('');
+  var sg = signals(r);
   $('d-box').innerHTML =
     '<h1>' + esc(r.name) + '</h1><div class="sub">' + esc(r.school) + ' · ' + esc(r.grade) + (r.track ? ' · ' + esc(r.track) : '') + ' · ' + esc(String(r.received_at).slice(0, 10)) + ' · المحاولة ' + esc(r.attempt) + '</div>' +
-    '<div class="kpis"><div class="kpi"><div class="l">الجاهزية</div><div class="v">' + (num(r.cap_score) == null ? '—' : Math.round(num(r.cap_score)) + '%') + '</div><div class="s">' + esc(LV[r.cap_level] || '') + '</div></div>' +
-    '<div class="kpi"><div class="l">مستوى الخدمة</div><div class="v" style="font-size:16px">' + esc(SV[r.service_level] || '') + '</div><div class="s">' + esc([String(r.service_raised) === '1' ? 'رفع بناء على أسئلة المتابعة' : '', r.service_basis === 'capability_only' ? 'مرجعيات القرار غير مقيسة' : ''].filter(Boolean).join(' · ')) + '</div></div>' +
-    '<div class="kpi"><div class="l">رمز هولاند</div><div class="v">' + esc(r.holland_code) + '</div><div class="s">الاتساق: ' + esc({ high: 'مرتفع', medium: 'متوسط', low: 'منخفض' }[r.holland_consistency] || '') + '</div></div></div>' +
-    '<h2 style="font-size:14px;margin:8px 0">الجوانب</h2>' + facets.map(function (f) { return bar(f.label, num(r['facet_' + f.id])); }).join('') +
-    '<h2 style="font-size:14px;margin:12px 0 4px">التشخيص والتدخل المقترح</h2>' + (diags.length ? diags.map(function (c) { var d = META.diagnoses[c]; return '<div class="diag"><b>' + esc(d.label) + '</b><br>' + esc(d.recommendation) + '</div>'; }).join('') : '<p class="note">لم تفتح أسئلة متابعة لهذه الطالبة.</p>') +
-    '<p class="note">الجودة: سؤال التركيز ' + (String(r.attention_pass) === '1' ? 'صحيح' : String(r.attention_pass) === '0' ? 'خاطئ' : '—') + ' · إجابات متطابقة: ' + (String(r.straightline) === '1' ? 'نعم' : 'لا') + ' · المدة: ' + esc(r.duration_sec) + ' ثانية</p>' +
-    '<p class="note">الحدود المستخدمة مؤقتة إلى أن تشتق من بيانات العينة. التشخيص يناقش مع الطالبة، ولا يعد حكما نهائيا.</p>' +
+    '<h2>القدرة المدركة على اتخاذ القرار (1–5)</h2>' + CAP.map(function (f) { return bar(f.label, num(r['f_' + f.id]), '#0d8487'); }).join('') +
+    '<h2>ملف تعقيد سياق القرار (1–5)</h2>' + CX.map(function (f) { return bar(f.label, num(r['f_' + f.id]), num(r['f_' + f.id]) >= SIG ? '#e8603f' : '#f2a98f'); }).join('') +
+    '<h2>العوائق (' + esc(r.barrier_count) + ' من ' + esc(r.barrier_total) + ' قائمة)</h2><div class="chipline">' + bl + '</div>' +
+    '<h2>الدعم المحيط بالقرار</h2><div class="chipline">' + sp + '</div>' +
+    '<h2>إشارات داخلية للمرشدة</h2>' + (sg.length ? '<div class="chipline">' + sg.map(function (s) { return '<span class="hot">' + esc(s) + '</span>'; }).join('') + '</div>' : '<p class="note">لا توجد.</p>') +
+    '<p class="note">الأساس النظري لمستويات الخدمة مصفوفة سامبسون وزملائه (2000): القدرة × التعقيد. وهي غير مفعّلة آليا في مرحلة التطوير؛ القرار الإرشادي للمرشدة بعد الحديث مع الطالبة.</p>' +
+    '<p class="note">الجودة: عبارتا التركيز ' + (String(r.attention_pass) === '1' ? 'صحيحتان' : String(r.attention_pass) === '0' ? 'فيهما خطأ' : '—') + ' · أطول سلسلة إجابات متطابقة: ' + esc(r.longstring) + ' · نسبة الإجابة الأكثر تكرارا: ' + Math.round(num(r.same_share) * 100) + '% · المدة: ' + esc(r.duration_sec) + ' ثانية</p>' +
     '<div id="d-actions" style="margin-top:12px;display:flex;gap:8px"><button class="btn primary" onclick="window.print()">طباعة التقرير</button><button class="btn" onclick="document.getElementById(\'detail\').style.display=\'none\'">إغلاق</button></div>';
   $('detail').style.display = 'block';
+}
+
+/* ── تحليل البنود (لكل نسخة) ── */
+function keyedVal(it, v) { return it.reverse ? (META.scales[it.scale].length + 1 - v) : v; }
+function mean(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
+function sd(a) { if (a.length < 2) return null; var m = mean(a); return Math.sqrt(a.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / (a.length - 1)); }
+function corr(a, b) { var ma = mean(a), mb = mean(b), sa = 0, sb = 0, sab = 0; for (var i = 0; i < a.length; i++) { sa += (a[i] - ma) * (a[i] - ma); sb += (b[i] - mb) * (b[i] - mb); sab += (a[i] - ma) * (b[i] - mb); } return sa && sb ? sab / Math.sqrt(sa * sb) : null; }
+function alpha(cols) {
+  var k = cols.length, n = cols[0].length; if (k < 2 || n < 3) return null;
+  var tot = []; for (var i = 0; i < n; i++) { var s = 0; cols.forEach(function (c) { s += c[i]; }); tot.push(s); }
+  var vt = Math.pow(sd(tot), 2); if (!vt) return null;
+  var vs = cols.reduce(function (s, c) { return s + Math.pow(sd(c), 2); }, 0);
+  return k / (k - 1) * (1 - vs / vt);
+}
+function itemAnalysis() {
+  var stage = $('ia-stage').value;
+  var rows = ROWS.filter(function (r) { return r.stage === stage; });
+  $('ia-n').textContent = 'عدد الاستجابات في هذه النسخة: ' + rows.length;
+  if (rows.length < 5) { $('ia').innerHTML = '<p class="empty">يلزم 5 استجابات على الأقل في هذه النسخة لعرض المؤشرات.</p>'; return; }
+  var html = '';
+  CAP.concat(CX).forEach(function (f) {
+    var its = META.items.filter(function (i) { return i.facet === f.id && i.role === 'scored' && applies(i, stage); });
+    var comp = rows.filter(function (r) { return its.every(function (i) { return num(r['i_' + i.id]) != null; }); });
+    var cols = its.map(function (i) { return comp.map(function (r) { return keyedVal(i, num(r['i_' + i.id])); }); });
+    var a = comp.length >= 3 ? alpha(cols) : null;
+    html += '<div class="facethead"><b>' + esc(f.label) + '</b><span>ألفا = ' + f2(a) + ' · حالات مكتملة: ' + comp.length + '</span></div>';
+    html += '<div class="tablewrap" style="max-height:none"><table><thead><tr><th>الرمز</th><th>البند</th><th>ن</th><th>المتوسط</th><th>الانحراف</th><th>% الأدنى</th><th>% الأعلى</th><th>ر مصحح</th><th>ألفا عند الحذف</th></tr></thead><tbody>';
+    its.forEach(function (it, j) {
+      var v = rows.map(function (r) { return num(r['i_' + it.id]); }).filter(function (x) { return x != null; }).map(function (x) { return keyedVal(it, x); });
+      var max = META.scales[it.scale].length;
+      var lo = v.length ? v.filter(function (x) { return x === 1; }).length / v.length * 100 : null;
+      var hi = v.length ? v.filter(function (x) { return x === max; }).length / v.length * 100 : null;
+      var rest = comp.map(function (_, i) { var s = 0; cols.forEach(function (c, q) { if (q !== j) s += c[i]; }); return s; });
+      var rit = comp.length >= 3 ? corr(cols[j], rest) : null;
+      var aDel = cols.length > 2 && comp.length >= 3 ? alpha(cols.filter(function (_, q) { return q !== j; })) : null;
+      html += '<tr><td>' + esc(it.id) + (it.reverse ? ' ↺' : '') + '</td><td style="white-space:normal;min-width:260px">' + esc(it.text) + '</td><td class="n">' + v.length + '</td><td class="n">' + f2(v.length ? mean(v) : null) + '</td><td class="n">' + f2(sd(v)) + '</td>' +
+        '<td class="n ' + (lo > 80 ? 'warnc' : '') + '">' + (lo == null ? '—' : Math.round(lo)) + '</td><td class="n ' + (hi > 80 ? 'warnc' : '') + '">' + (hi == null ? '—' : Math.round(hi)) + '</td>' +
+        '<td class="n ' + (rit != null && rit < 0.3 ? 'warnc' : '') + '">' + f2(rit) + '</td><td class="n">' + f2(aDel) + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+  // العوائق والدعم: توزيع فقط
+  var other = META.items.filter(function (i) { return (i.role === 'barrier' || i.role === 'support') && applies(i, stage); });
+  html += '<div class="facethead"><b>مؤشرات العوائق والدعم</b><span>توزيع الإجابات فقط؛ لا يُحسب لها اتساق داخلي</span></div><div class="tablewrap" style="max-height:none"><table><thead><tr><th>الرمز</th><th>البند</th><th>ن</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead><tbody>';
+  other.forEach(function (it) {
+    var v = rows.map(function (r) { return num(r['i_' + it.id]); }).filter(function (x) { return x != null; });
+    var max = META.scales[it.scale].length, cells = '';
+    for (var k = 1; k <= 5; k++) cells += '<td class="n">' + (k > max ? '' : (v.length ? Math.round(v.filter(function (x) { return x === k; }).length / v.length * 100) + '%' : '—')) + '</td>';
+    html += '<tr><td>' + esc(it.id) + '</td><td style="white-space:normal;min-width:260px">' + esc(it.text) + '</td><td class="n">' + v.length + '</td>' + cells + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  $('ia').innerHTML = html;
 }
 
 function exportShown() {
@@ -240,10 +333,18 @@ function exportShown() {
     .exportRows(header, rows, '');
 }
 
-['f-school', 'f-stage', 'f-grade', 'f-level', 'f-service', 'f-from', 'f-to', 'f-latest', 'f-notest', 'f-quality'].forEach(function (id) { $(id).addEventListener('change', apply); });
+['f-school', 'f-stage', 'f-grade', 'f-from', 'f-to', 'f-latest', 'f-notest', 'f-quality', 'f-sig'].forEach(function (id) { $(id).addEventListener('change', apply); });
 $('f-q').addEventListener('input', apply);
+$('ia-stage').addEventListener('change', itemAnalysis);
 $('b-reload').addEventListener('click', load);
 $('b-export').addEventListener('click', exportShown);
+Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
+  t.addEventListener('click', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (x) { x.classList.toggle('on', x === t); });
+    Array.prototype.forEach.call(document.querySelectorAll('.view'), function (v) { v.classList.toggle('on', v.id === t.getAttribute('data-v')); });
+    if (t.getAttribute('data-v') === 'v-over') charts();
+  });
+});
 $('tbl').addEventListener('click', function (e) {
   var th = e.target.closest('th'); if (th) { var k = th.getAttribute('data-k'); SORT = { k: k, d: SORT.k === k ? -SORT.d : 1 }; table(); return; }
   var tr = e.target.closest('tr[data-id]'); if (tr) detail(tr.getAttribute('data-id'));

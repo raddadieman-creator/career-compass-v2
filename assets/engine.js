@@ -1,7 +1,8 @@
 /* =====================================================================
-   engine.js — محرك بناء النموذج والتصحيح
-   مقياس جاهزية القرار المهني · النسخة الثانية
-   كل الحسابات هنا قواعد ثابتة: الإجابات نفسها تعطي النتيجة نفسها دائماً.
+   engine.js — بناء النموذج والتصحيح
+   البوصلة المهنية: أداة تقدير الجاهزية لاتخاذ القرار المهني (المسودة الرابعة)
+   كل الحسابات قواعد ثابتة: الإجابات نفسها تعطي النتيجة نفسها دائما.
+   لا توجد هنا مستويات ولا درجات قطع؛ الأداة في مرحلة التطوير.
    ===================================================================== */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -9,18 +10,13 @@
 })(this, function () {
   'use strict';
 
-  // حدود مؤقتة — تُضبط بعد جمع البيانات (المعايير المئينية وجلسة تحديد درجات القطع)
   var DEFAULTS = {
-    capabilityHigh: 70, capabilityMedium: 45,   // الإسناد الذاتي (0–100)
-    complexityHigh: 60,                         // مرجعيات القرار (0–100)
-    followupLow: 34, followupHigh: 66,          // حدود فتح أسئلة المتابعة على مستوى الجانب
-    maxFollowups: 4,
-    bankPerStudent: 7,
-    fastSecondsPerItem: 2.5,                    // أقل من هذا المتوسط يُعلَّم «سريع»
-    straightlineShare: 0.9
+    signalHigh: 4,            // إشارة داخلية للمرشدة: متوسط جانب التعقيد 4 فأكثر (مؤقتة، تُراجع بعد التجربة الاستطلاعية)
+    barrierPresent: 3,        // يُعد العائق قائما إذا كانت الإجابة 3 أو 4
+    barrierBig: 4,            // «يمثل عائقا كبيرا»
+    fastSecondsPerItem: 2,    // أقل من ثانيتين للبند في المتوسط يُعلَّم «سريع» للمراجعة
+    straightlineShare: 0.9    // 90% فأكثر من الإجابات بالقيمة نفسها يُعلَّم للمراجعة
   };
-
-  var HEX = ['R', 'I', 'A', 'S', 'E', 'C'];
 
   function shuffle(arr, rng) {
     var a = arr.slice();
@@ -31,215 +27,117 @@
     return a;
   }
 
-  function forStage(item, stage) {
-    return !item.stages || item.stages.indexOf(stage) !== -1;
+  function forStage(item, stage) { return item.stage === 'both' || item.stage === stage; }
+
+  function facetMap(bank) {
+    var m = {};
+    bank.facets.forEach(function (f) { m[f.id] = f; });
+    return m;
   }
 
-  /* بناء النموذج لطالبة واحدة: البنود الأساسية + عينة عشوائية من البنك + بنود الانتباه.
-     يُعاد ترتيب العرض لكل محطة، ويُحفظ هذا الترتيب مع الإجابات. */
+  function stationOf(item, fm) { return item.station || (fm[item.facet] && fm[item.facet].station); }
+
+  /* نموذج طالب أو طالبة: كل بنود المرحلة، مرتبة عشوائيا داخل كل محطة، ويُحفظ الترتيب مع الإجابات */
   function buildForm(bank, opts) {
     opts = opts || {};
     var rng = opts.rng || Math.random;
-    var stage = opts.stage;
-    var perStudent = opts.bankPerStudent != null ? opts.bankPerStudent : DEFAULTS.bankPerStudent;
-
-    var eligible = bank.items.filter(function (it) { return forStage(it, stage); });
-    var bankItems = shuffle(eligible.filter(function (it) { return it.role === 'bank'; }), rng).slice(0, perStudent);
-    var chosen = eligible.filter(function (it) { return it.role !== 'bank'; }).concat(bankItems);
-
-    var stations = bank.stations.filter(function (s) { return s.id !== 'followup'; }).map(function (s) {
-      var dims = s.dimensions;
-      var items = chosen.filter(function (it) { return dims.indexOf(it.dimension) !== -1; });
-      var ordered = shuffle(items, rng).map(function (it) {
-        var copy = JSON.parse(JSON.stringify(it));
-        var indexed = copy.options.map(function (o, i) { o._idx = i; return o; });
-        copy.options = it.shuffleOptions ? shuffle(indexed, rng) : indexed;
-        return copy;
-      });
-      return { station: s, items: ordered };
-    }).filter(function (s) { return s.items.length > 0; });
-
-    return {
-      stations: stations,
-      bankDrawn: bankItems.map(function (it) { return it.id; }),
-      order: stations.reduce(function (acc, s) { return acc.concat(s.items.map(function (it) { return it.id; })); }, [])
-    };
+    var fm = facetMap(bank);
+    var eligible = bank.items.filter(function (it) { return forStage(it, opts.stage); });
+    var stations = bank.stations.map(function (s) {
+      var items = shuffle(eligible.filter(function (it) { return stationOf(it, fm) === s.id; }), rng);
+      return { station: s, items: items };
+    }).filter(function (s) { return s.items.length; });
+    var order = [];
+    stations.forEach(function (s) { s.items.forEach(function (it) { order.push(it.id); }); });
+    return { stations: stations, order: order };
   }
 
-  function itemById(bank, id) {
-    for (var i = 0; i < bank.items.length; i++) if (bank.items[i].id === id) return bank.items[i];
-    return null;
-  }
+  function round2(x) { return Math.round(x * 100) / 100; }
 
-  function round1(x) { return Math.round(x * 10) / 10; }
+  function scaleMax(bank, it) { return bank.scales[it.scale].length; }
 
-  /* التصحيح. responses = { itemId: قيمة } حيث القيمة:
-     - للبند الرتبي: قيمة الخيار (1..k)
-     - لبند الميول: فهرس الخيار في ترتيبه الأصلي داخل بنك البنود
-     - للبند الوصفي: قيمة الخيار */
+  /* القيمة بعد القلب للبنود العكسية */
+  function keyed(bank, it, v) { return it.reverse ? (scaleMax(bank, it) + 1 - v) : v; }
+
   function score(bank, responses, opts) {
     opts = opts || {};
-    var cfg = Object.assign({}, DEFAULTS, opts.config || {});
+    var cfg = {}; Object.keys(DEFAULTS).forEach(function (k) { cfg[k] = opts[k] != null ? opts[k] : DEFAULTS[k]; });
+    var stage = opts.stage;
+    var items = bank.items.filter(function (it) { return !stage || forStage(it, stage); });
 
-    // 1) الجوانب
+    // الجوانب المصححة: متوسط على سلم 1–5
     var facets = {};
-    bank.facets.forEach(function (f) { facets[f.id] = { id: f.id, dimension: f.dimension, label: f.label, values: [], k: [] }; });
-    bank.items.forEach(function (it) {
-      if (it.type !== 'ordinal' || (it.role !== 'core' && it.role !== 'bank') || !it.facet) return;
-      var v = responses[it.id];
-      if (v == null || v === '') return;
-      var k = it.options.length;
-      facets[it.facet].values.push((Number(v) - 1) / (k - 1) * 100);
-      facets[it.facet].k.push(k);
-    });
-    Object.keys(facets).forEach(function (id) {
-      var f = facets[id];
-      f.n = f.values.length;
-      f.score = f.n ? round1(f.values.reduce(function (a, b) { return a + b; }, 0) / f.n) : null;
-      delete f.values; delete f.k;
+    bank.facets.forEach(function (f) {
+      if (f.component !== 'capability' && f.component !== 'complexity') return;
+      var vals = items.filter(function (it) { return it.facet === f.id && it.role === 'scored' && responses[it.id] != null; })
+        .map(function (it) { return keyed(bank, it, Number(responses[it.id])); });
+      var k = items.filter(function (it) { return it.facet === f.id && it.role === 'scored'; }).length;
+      facets[f.id] = { mean: vals.length ? round2(vals.reduce(function (a, b) { return a + b; }, 0) / vals.length) : null, n: vals.length, k: k };
     });
 
-    // 2) الأبعاد الكامنة = متوسط جوانبها المقيسة
-    function dimScore(dim) {
-      var fs = Object.keys(facets).map(function (k) { return facets[k]; })
-        .filter(function (f) { return f.dimension === dim && f.score != null; });
-      if (!fs.length) return { score: null, measured: false, facetsMeasured: 0 };
-      return {
-        score: round1(fs.reduce(function (a, f) { return a + f.score; }, 0) / fs.length),
-        measured: true, facetsMeasured: fs.length
-      };
-    }
-    var capability = dimScore('capability');
-    capability.level = capability.score == null ? null :
-      capability.score >= cfg.capabilityHigh ? 'high' : capability.score >= cfg.capabilityMedium ? 'medium' : 'low';
-    var complexity = dimScore('complexity');
-    complexity.level = complexity.score == null ? null : complexity.score >= cfg.complexityHigh ? 'high' : 'low';
+    function compIds(c) { return bank.facets.filter(function (f) { return f.component === c && facets[f.id] && facets[f.id].n; }).map(function (f) { return f.id; }); }
 
-    // 3) الميول ومؤشرات هولاند البنيوية
-    var hs = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
-    var nInterest = 0;
-    bank.items.forEach(function (it) {
-      if (it.type !== 'profile') return;
-      var v = responses[it.id];
-      if (v == null || v === '') return;
-      var opt = it.options[Number(v)];
-      if (!opt) return;
-      nInterest++;
-      Object.keys(opt.scores || {}).forEach(function (t) { hs[t] += opt.scores[t]; });
-    });
-    var ranked = HEX.slice().sort(function (a, b) { return (hs[b] - hs[a]) || (HEX.indexOf(a) - HEX.indexOf(b)); });
-    var interests = null;
-    if (nInterest) {
-      var d = Math.abs(HEX.indexOf(ranked[0]) - HEX.indexOf(ranked[1]));
-      var hexDist = Math.min(d, 6 - d);
-      interests = {
-        scores: hs,
-        code: ranked.slice(0, 3).join(''),
-        top: ranked[0],
-        differentiation: hs[ranked[0]] - hs[ranked[5]],
-        clarity: hs[ranked[0]] - hs[ranked[1]],
-        consistency: hexDist === 1 ? 'high' : hexDist === 2 ? 'medium' : 'low',
-        answered: nInterest
-      };
+    // المكوّن الأول: وصف نسبي فقط (الجانب الأعلى والأدنى لدى المستجيب نفسه)، دون درجة كلية
+    var cap = compIds('capability');
+    var strongest = null, weakest = null;
+    if (cap.length > 1) {
+      var sorted = cap.slice().sort(function (a, b) { return facets[b].mean - facets[a].mean; });
+      if (facets[sorted[0]].mean > facets[sorted[sorted.length - 1]].mean) {
+        strongest = sorted[0];
+        weakest = sorted[sorted.length - 1];
+      }
     }
 
-    // 4) مستوى الخدمة وفق نموذج سامبسون (القدرة × التعقيد)
-    var service = null;
-    if (capability.level) {
-      var cx = complexity.level || 'low';
-      var table = {
-        high: { low: 'self', high: 'brief' },
-        medium: { low: 'brief', high: 'brief' },
-        low: { low: 'brief_group', high: 'individual' }
-      };
-      service = {
-        level: table[capability.level][cx],
-        basis: complexity.level ? 'capability_x_complexity' : 'capability_only'
-      };
-    }
+    // المكوّن الثاني: ثلاث درجات مستقلة + إشارة داخلية للمرشدة
+    var cx = compIds('complexity');
+    var cxHigh = cx.filter(function (id) { return facets[id].mean >= cfg.signalHigh; });
 
-    // 5) جودة الاستجابة
-    var attention = bank.items.filter(function (it) { return it.role === 'attention'; });
-    var attAnswered = attention.filter(function (it) { return responses[it.id] != null; });
-    var attentionPass = attAnswered.length ? attAnswered.every(function (it) { return Number(responses[it.id]) === it.expected; }) : null;
-    var ordVals = bank.items.filter(function (it) { return it.type === 'ordinal' && it.role !== 'attention' && responses[it.id] != null; })
+    // العوائق: كل مؤشر منفردا، والعدد داخل النسخة فقط
+    var bItems = items.filter(function (it) { return it.role === 'barrier'; });
+    var rated = bItems.filter(function (it) { return responses[it.id] != null; })
+      .map(function (it) { return { id: it.id, value: Number(responses[it.id]) }; });
+    var counted = bItems.filter(function (it) { return !it.excludeFromCount; });
+    var present = counted.filter(function (it) { return Number(responses[it.id]) >= cfg.barrierPresent; }).map(function (it) { return it.id; });
+    var big = bItems.filter(function (it) { return Number(responses[it.id]) >= cfg.barrierBig; }).map(function (it) { return it.id; });
+
+    // الدعم: كل مؤشر منفردا، دون أي درجة
+    var support = {};
+    items.filter(function (it) { return it.role === 'support'; }).forEach(function (it) { support[it.id] = responses[it.id] != null ? Number(responses[it.id]) : null; });
+
+    // جودة الاستجابة
+    var att = items.filter(function (it) { return it.role === 'attention'; });
+    var attAnswered = att.filter(function (it) { return responses[it.id] != null; });
+    var attFailed = attAnswered.filter(function (it) { return Number(responses[it.id]) !== it.expected; }).length;
+    var agree = (opts.order || items.map(function (it) { return it.id; }))
+      .map(function (id) { return items.filter(function (it) { return it.id === id; })[0]; })
+      .filter(function (it) { return it && it.scale === 'agree' && it.role !== 'attention' && responses[it.id] != null; })
       .map(function (it) { return Number(responses[it.id]); });
-    var straightline = false;
-    if (ordVals.length >= 6) {
-      var counts = {};
-      ordVals.forEach(function (v) { counts[v] = (counts[v] || 0) + 1; });
-      var maxShare = Math.max.apply(null, Object.keys(counts).map(function (k) { return counts[k]; })) / ordVals.length;
-      straightline = maxShare >= cfg.straightlineShare;
-    }
-    var fast = null;
-    if (opts.durationSec != null && opts.itemsShown) fast = opts.durationSec / opts.itemsShown < cfg.fastSecondsPerItem;
+    var counts = {}, longest = 0, run = 0;
+    agree.forEach(function (v, i) {
+      counts[v] = (counts[v] || 0) + 1;
+      run = (i && v === agree[i - 1]) ? run + 1 : 1;
+      if (run > longest) longest = run;
+    });
+    var modal = 0; Object.keys(counts).forEach(function (k) { if (counts[k] > modal) modal = counts[k]; });
+    var share = agree.length ? modal / agree.length : 0;
+    var shown = opts.itemsShown || 0;
 
     return {
       facets: facets,
-      capability: capability,
-      complexity: complexity,
-      interests: interests,
-      service: service,
-      quality: { attentionPass: attentionPass, straightline: straightline, fast: fast }
+      capability: { facets: cap, strongest: strongest, weakest: weakest },
+      complexity: { facets: cx, high: cxHigh },
+      barriers: { rated: rated, present: present, presentCount: present.length, countedTotal: counted.length, big: big },
+      support: support,
+      quality: {
+        attentionPass: att.length ? (attAnswered.length === att.length && attFailed === 0) : null,
+        attentionFailed: attFailed,
+        longstring: longest,
+        sameShare: round2(share),
+        straightline: share >= cfg.straightlineShare,
+        fast: !!(opts.durationSec && shown && opts.durationSec / shown < cfg.fastSecondsPerItem)
+      }
     };
   }
 
-  /* أسئلة المتابعة المستحقة: الجوانب المنخفضة في القدرة أو المرتفعة في التعقيد،
-     الأشد أولاً، بحد أقصى maxFollowups. أسئلة المتابعة لا تدخل في الدرجة. */
-  function followupsFor(bank, result, stage, opts) {
-    var cfg = Object.assign({}, DEFAULTS, (opts && opts.config) || {});
-    var picked = [];
-    bank.followups.forEach(function (fu) {
-      if (!forStage(fu, stage)) return;
-      var severity = null;
-      fu.facets.forEach(function (fid) {
-        var f = result.facets[fid];
-        if (!f || f.score == null) return;
-        var s = fu.when === 'low' ? (f.score <= cfg.followupLow ? cfg.followupLow - f.score + 1 : null)
-                                  : (f.score >= cfg.followupHigh ? f.score - cfg.followupHigh + 1 : null);
-        if (s != null && (severity == null || s > severity)) severity = s;
-      });
-      if (severity != null) picked.push({ fu: fu, severity: severity });
-    });
-    picked.sort(function (a, b) { return b.severity - a.severity; });
-    return picked.slice(0, cfg.maxFollowups).map(function (p) { return p.fu; });
-  }
-
-  function diagnose(bank, followupResponses) {
-    var out = [];
-    bank.followups.forEach(function (fu) {
-      var v = followupResponses[fu.id];
-      if (v == null) return;
-      var opt = fu.options.filter(function (o) { return o.value === v; })[0];
-      if (!opt) return;
-      var d = bank.diagnoses[opt.diagnosis];
-      if (!d) return;
-      out.push({ followup: fu.id, code: opt.diagnosis, label: d.label, recommendation: d.recommendation, serviceHint: d.serviceHint });
-    });
-    return out;
-  }
-
-  /* إذا أشار التشخيص إلى إرشاد فردي يُرفع مستوى الخدمة إليه (قاعدة مقترحة تحتاج تحكيماً) */
-  function finalService(service, diagnoses) {
-    if (!service) return null;
-    var s = Object.assign({}, service);
-    if (diagnoses.some(function (d) { return d.serviceHint === 'individual'; }) && s.level !== 'individual') {
-      s.level = 'individual'; s.raisedByFollowup = true;
-    }
-    return s;
-  }
-
-  var SERVICE_LABELS = {
-    self: 'خدمة ذاتية',
-    brief: 'خدمة موجزة بمساعدة المرشد',
-    brief_group: 'خدمة موجزة جماعية',
-    individual: 'إدارة حالة فردية'
-  };
-  var LEVEL_LABELS = { high: 'مرتفعة', medium: 'متوسطة', low: 'تحتاج تطوير' };
-
-  return {
-    DEFAULTS: DEFAULTS, HEX: HEX, SERVICE_LABELS: SERVICE_LABELS, LEVEL_LABELS: LEVEL_LABELS,
-    shuffle: shuffle, buildForm: buildForm, score: score, followupsFor: followupsFor,
-    diagnose: diagnose, finalService: finalService, itemById: itemById
-  };
+  return { DEFAULTS: DEFAULTS, buildForm: buildForm, score: score, forStage: forStage, keyed: keyed };
 });

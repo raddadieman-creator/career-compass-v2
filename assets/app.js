@@ -1,19 +1,18 @@
 /* =====================================================================
-   app.js — واجهة المقياس: سؤال واحد في كل شاشة، خريطة رحلة، حفظ، نتائج
-   البنود تقرأ من data/items.json، والحساب كله في engine.js
+   app.js — واجهة الطلبة: سؤال واحد في كل شاشة، خريطة رحلة، حفظ، نتيجة وصفية
+   البنود تُقرأ من data/items.json، والحساب كله في engine.js
+   النتيجة للطالب أو الطالبة وصفية فقط: لا مستويات ولا درجات قطع ولا توجيه آلي.
    ===================================================================== */
 (function () {
   'use strict';
   var CFG = window.CC_CONFIG, E = window.ENGINE;
   var params = new URLSearchParams(location.search);
   var TEST = params.get('test') === '1';
-  var QKEY = 'cc_v2_queue';
-  var MEAS = ['interests', 'capability', 'complexity'];
+  var QKEY = 'cc_v3_queue';
 
   var S = {
-    bank: null, user: {}, form: null, queue: [], si: 0, qi: 0,
-    responses: {}, fu: {}, fuDone: false, startedAt: null, finishedAt: null,
-    submissionId: null, memQueue: [], fixedSchool: null
+    bank: null, user: {}, form: null, si: 0, qi: 0, responses: {},
+    startedAt: null, finishedAt: null, submissionId: null, memQueue: [], fixedSchool: null, fm: {}
   };
 
   /* ── أدوات ── */
@@ -22,9 +21,7 @@
   function uuid() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
   function fem() { return S.user.gender === 'F'; }
   function g(m, f) { return fem() ? f : m; }
-  function txt(it) { return (fem() && it.textF) ? it.textF : it.text; }
   function ar(n) { return String(n).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; }); }
-  function shortTitle(st) { return st.title; }
   function intro(st) { return (fem() && st.introF) ? st.introF : st.intro; }
   function show(id) {
     Array.prototype.forEach.call(document.querySelectorAll('.screen'), function (s) { s.classList.remove('active'); });
@@ -39,7 +36,6 @@
   /* ── التهيئة ── */
   function init() {
     $('ver').textContent = CFG.VERSION;
-    // تدريج البوصلة: ٣٦ علامة، الرئيسية كل ٩٠ درجة
     var ticks = '';
     for (var a = 0; a < 360; a += 10) {
       if (a % 90 === 0) continue;
@@ -52,14 +48,13 @@
     var code = params.get('school');
     S.fixedSchool = CFG.SCHOOLS.filter(function (s) { return s.code === code; })[0] || null;
 
-    chipGroup($('f-gender'), null, function () { });
+    chipGroup($('f-gender'));
     var stageOnly = S.fixedSchool ? S.fixedSchool.stage : null;
     makeChips($('f-grade-int'), stageOnly === 'secondary' ? [] : CFG.GRADES.intermediate);
     makeChips($('f-grade-sec'), stageOnly === 'intermediate' ? [] : CFG.GRADES.secondary);
     if (stageOnly) $(stageOnly === 'secondary' ? 'f-grade-int' : 'f-grade-sec').parentNode.hidden = true;
     makeChips($('f-track'), CFG.TRACKS);
     chipGroup($('f-track'));
-    // مجموعتا الصفوف تعملان كمجموعة واحدة
     [$('f-grade-int'), $('f-grade-sec')].forEach(function (grp) {
       grp.addEventListener('click', function (e) {
         var b = e.target.closest('.chip'); if (!b) return;
@@ -67,7 +62,6 @@
         onGrade();
       });
     });
-
     if (S.fixedSchool) {
       $('wrap-school').hidden = true;
       $('school-fixed').hidden = false;
@@ -76,16 +70,16 @@
       chipGroup($('f-school'));
     }
 
-    $('btn-start').addEventListener('click', function () {
-      if (!S.bank) return;
-      show('screen-data');
-    });
+    $('btn-start').addEventListener('click', function () { if (S.bank) show('screen-data'); });
     $('btn-data').addEventListener('click', onData);
     $('btn-back').addEventListener('click', goBack);
     $('btn-next').addEventListener('click', function () { renderQuestion(); show('screen-quiz'); });
+    document.addEventListener('keydown', onKey);
 
-    fetch('data/items.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (b) { S.bank = b; })
-      .catch(function () { $('btn-start').disabled = true; $('btn-start').textContent = 'تعذر تحميل الأسئلة، أعد/ي تحميل الصفحة'; });
+    fetch('data/items.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (b) {
+      S.bank = b;
+      b.facets.forEach(function (f) { S.fm[f.id] = f; });
+    }).catch(function () { $('btn-start').disabled = true; $('btn-start').textContent = 'تعذر تحميل العبارات، أعد تحميل الصفحة'; });
 
     flushQueue();
     setInterval(flushQueue, 20000);
@@ -95,11 +89,10 @@
   function makeChips(box, values) {
     box.innerHTML = values.map(function (v) { return '<button type="button" class="chip" role="radio" aria-checked="false" data-v="' + esc(v) + '">' + esc(v) + '</button>'; }).join('');
   }
-  function chipGroup(box, _, cb) {
+  function chipGroup(box) {
     box.addEventListener('click', function (e) {
       var b = e.target.closest('.chip'); if (!b) return;
       Array.prototype.forEach.call(box.querySelectorAll('.chip'), function (x) { x.setAttribute('aria-checked', String(x === b)); });
-      if (cb) cb(b.getAttribute('data-v'));
     });
   }
   function picked(box) { var b = box.querySelector('.chip[aria-checked="true"]'); return b ? b.getAttribute('data-v') : ''; }
@@ -113,7 +106,6 @@
     $('wrap-track').hidden = gr.stage !== 'secondary';
     if (!S.fixedSchool) fillSchools(gr.stage);
   }
-  /* المدرسة تظهر بعد اختيار الصف، وتعرض مدارس المرحلة فقط */
   function fillSchools(stage) {
     var box = $('f-school');
     var cur = picked(box);
@@ -130,45 +122,40 @@
     var code = picked($('f-school'));
     var sch = S.fixedSchool || CFG.SCHOOLS.filter(function (s) { return s.code === code && s.stage === gr.stage; })[0];
     var u = {
-      name: $('f-name').value.trim(),
-      gender: picked($('f-gender')),
-      stage: gr.stage, grade: gr.grade,
-      track: gr.stage === 'secondary' ? picked($('f-track')) : '',
-      school: sch ? sch.name : '',
-      schoolCode: sch ? sch.code : '',
-      schoolFromLink: !!S.fixedSchool
+      name: $('f-name').value.trim(), gender: picked($('f-gender')),
+      stage: gr.stage, grade: gr.grade, track: gr.stage === 'secondary' ? picked($('f-track')) : '',
+      school: sch ? sch.name : '', schoolCode: sch ? sch.code : '', schoolFromLink: !!S.fixedSchool
     };
     var err = '';
-    if (!u.name) err = 'اكتب/ي الاسم من فضلك.';
-    else if (!u.gender) err = 'اختر/ي: طالبة أو طالب.';
-    else if (!u.grade) err = 'اختر/ي الصف.';
-    else if (u.stage === 'secondary' && !u.track) err = 'اختر/ي المسار.';
-    else if (!u.school) err = 'اختر/ي المدرسة.';
+    if (!u.name) err = 'اكتب الاسم من فضلك.';
+    else if (!u.gender) err = 'اختر: طالبة أو طالب.';
+    else if (!u.grade) err = 'اختر الصف.';
+    else if (u.stage === 'secondary' && !u.track) err = 'اختر المسار.';
+    else if (!u.school) err = 'اختر المدرسة.';
+    S.user.gender = u.gender;
+    if (err && fem()) err = err.replace('اكتب', 'اكتبي').replace(/^اختر/, 'اختاري');
     $('form-error').textContent = err;
     if (err) return;
 
     S.user = u;
     S.submissionId = uuid();
-    S.form = E.buildForm(S.bank, { stage: u.stage, bankPerStudent: CFG.BANK_PER_STUDENT });
-    S.queue = S.form.stations.slice();
+    S.form = E.buildForm(S.bank, { stage: u.stage });
+    S.responses = {};
     S.si = 0; S.qi = 0;
     S.startedAt = new Date();
     $('journey').hidden = false;
     drawJourney();
     $('b-medal').innerHTML = '<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--primary)" stroke-width="4"/><path d="M26 10 L31 26 L26 42 L21 26 Z" fill="var(--accent)"/></svg>';
     $('b-done').textContent = 'المحطة الأولى';
-    $('b-title').textContent = S.queue[0].station.title;
-    $('b-intro').textContent = intro(S.queue[0].station);
+    $('b-title').textContent = S.form.stations[0].station.title;
+    $('b-intro').textContent = intro(S.form.stations[0].station);
     show('screen-break');
   }
 
   /* ── خريطة الرحلة ── */
   function drawJourney() {
-    var stops = S.form.stations.map(function (s) { return { id: s.station.id, label: shortTitle(s.station) }; })
-      .concat([{ id: 'results', label: 'نتيجتي' }]);
-    var curId = S.finishedAt ? 'results' : (S.queue[S.si] ? S.queue[S.si].station.id : 'results');
-    if (curId === 'followup') curId = 'vision';
-    var curIdx = stops.map(function (s) { return s.id; }).indexOf(curId);
+    var stops = S.form.stations.map(function (s) { return { id: s.station.id, label: s.station.title }; }).concat([{ id: 'results', label: 'نتيجتي' }]);
+    var curIdx = S.finishedAt ? stops.length - 1 : S.si;
     $('journey').innerHTML = stops.map(function (s, i) {
       var cls = i < curIdx ? 'done' : i === curIdx ? 'now' : '';
       var mark = i < curIdx ? '✓' : (i === stops.length - 1 ? '★' : ar(i + 1));
@@ -178,7 +165,7 @@
   }
 
   /* ── السؤال ── */
-  function current() { var st = S.queue[S.si]; return st ? { st: st, it: st.items[S.qi] } : null; }
+  function current() { var st = S.form.stations[S.si]; return st ? { st: st, it: st.items[S.qi] } : null; }
 
   function renderQuestion() {
     var c = current(); if (!c) return;
@@ -186,21 +173,24 @@
     $('q-station').textContent = st.station.title;
     $('q-count').textContent = ar(S.qi + 1) + ' من ' + ar(n);
     $('q-bar').style.width = Math.round(S.qi / n * 100) + '%';
-    $('q-meta').textContent = ''; // تسميات البنود الداخلية لا تعرض للطالبة
-    $('q-text').textContent = txt(it);
-    var prev = it._followup ? S.fu[it.id] : S.responses[it.id];
+    var isBarrier = it.scale === 'barrier';
+    $('q-meta').hidden = !isBarrier;
+    $('q-meta').textContent = isBarrier ? S.bank.barrierStem : '';
+    $('q-text').textContent = it.text;
+    var prev = S.responses[it.id];
     $('q-options').innerHTML = '';
-    it.options.forEach(function (o) {
+    S.bank.scales[it.scale].forEach(function (label, i) {
+      var val = i + 1;
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'opt'; b.setAttribute('role', 'radio');
-      b.textContent = (fem() && o.labelF) ? o.labelF : o.label;
-      var val = it.type === 'profile' ? o._idx : o.value;
-      if (prev != null && prev === val) { b.classList.add('selected'); b.setAttribute('aria-checked', 'true'); }
+      b.textContent = label;
+      if (prev === val) { b.classList.add('selected'); b.setAttribute('aria-checked', 'true'); }
       else b.setAttribute('aria-checked', 'false');
       b.addEventListener('click', function () { choose(it, val, b); });
       $('q-options').appendChild(b);
     });
-    $('btn-back').hidden = S.qi === 0;
+    $('q-options').setAttribute('aria-label', it.text);
+    $('btn-back').hidden = S.si === 0 && S.qi === 0;
     var card = $('q-card'); card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter');
   }
 
@@ -210,97 +200,85 @@
     locked = true;
     Array.prototype.forEach.call($('q-options').querySelectorAll('.opt'), function (b) { b.classList.remove('selected'); b.setAttribute('aria-checked', 'false'); });
     btn.classList.add('selected'); btn.setAttribute('aria-checked', 'true');
-    if (it._followup) S.fu[it.id] = val; else S.responses[it.id] = val;
+    S.responses[it.id] = val;
     setTimeout(function () { locked = false; advance(); }, CFG.TRANSITION_MS);
   }
 
+  /* الأرقام من لوحة المفاتيح تختار البديل المقابل */
+  function onKey(e) {
+    if (!$('screen-quiz').classList.contains('active')) return;
+    var k = parseInt(e.key, 10);
+    var opts = $('q-options').querySelectorAll('.opt');
+    if (k >= 1 && k <= opts.length) opts[k - 1].click();
+  }
+
+  /* الرجوع يعمل داخل المحطة وبين المحطات */
   function goBack() {
-    if (S.qi > 0) { S.qi--; renderQuestion(); }
+    if (S.qi > 0) { S.qi--; }
+    else if (S.si > 0) { S.si--; S.qi = S.form.stations[S.si].items.length - 1; drawJourney(); }
+    renderQuestion();
   }
 
   function advance() {
-    var st = S.queue[S.si];
+    var st = S.form.stations[S.si];
     if (S.qi < st.items.length - 1) { S.qi++; renderQuestion(); return; }
-    // انتهت المحطة
     $('q-bar').style.width = '100%';
     var done = st.station;
-    S.si++; S.qi = 0;
-    maybeInsertFollowups();
-    var next = S.queue[S.si];
+    var next = S.form.stations[S.si + 1];
     if (!next) { finish(); return; }
+    S.si++; S.qi = 0;
     drawJourney();
-    $('b-medal').innerHTML = medal(done.id);
-    $('b-done').textContent = g('أنهيت «', 'أنهيت «') + shortTitle(done) + '»';
+    $('b-medal').innerHTML = medal();
+    $('b-done').textContent = 'أنهيت «' + done.title + '»';
     $('b-title').textContent = next.station.title;
     $('b-intro').textContent = intro(next.station);
     show('screen-break');
   }
 
-  /* أسئلة المتابعة تفتح بعد محطات القياس وقبل المحطة الوصفية */
-  function maybeInsertFollowups() {
-    if (S.fuDone) return;
-    var next = S.queue[S.si];
-    if (next && MEAS.indexOf(next.station.id) !== -1) return;
-    S.fuDone = true;
-    var interim = E.score(S.bank, S.responses);
-    var fus = E.followupsFor(S.bank, interim, S.user.stage);
-    if (!fus.length) return;
-    var st = S.bank.stations.filter(function (s) { return s.id === 'followup'; })[0];
-    var items = fus.map(function (f) { var c = JSON.parse(JSON.stringify(f)); c.options.forEach(function (o, i) { o._idx = i; }); c._followup = true; return c; });
-    S.queue.splice(S.si, 0, { station: st, items: items });
+  function medal() {
+    return '<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--primary)" stroke-width="4"/><path d="M15 27 l7 7 l15 -16" fill="none" stroke="var(--primary)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
-  function medal(id) {
-    var col = { interests: 'var(--warn)', capability: 'var(--primary)', complexity: 'var(--accent)', followup: 'var(--accent)' }[id] || 'var(--primary)';
-    return '<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="' + col + '" stroke-width="4"/><path d="M15 27 l7 7 l15 -16" fill="none" stroke="' + col + '" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  }
-
-  /* ── النهاية: التصحيح والحفظ والنتائج ── */
+  /* ── النهاية: التصحيح والحفظ والنتيجة ── */
   function finish() {
     S.finishedAt = new Date();
-    var shown = S.queue.reduce(function (a, s) { return a + s.items.length; }, 0);
     var dur = Math.round((S.finishedAt - S.startedAt) / 1000);
-    var result = E.score(S.bank, S.responses, { durationSec: dur, itemsShown: shown });
-    var diagnoses = E.diagnose(S.bank, S.fu);
-    var service = E.finalService(result.service, diagnoses);
-    var q = loadQueue(); q.push(buildPayload(result, diagnoses, service, dur, shown)); saveQueue(q);
+    var shown = S.form.order.length;
+    var r = E.score(S.bank, S.responses, { stage: S.user.stage, order: S.form.order, durationSec: dur, itemsShown: shown });
+    var q = loadQueue(); q.push(buildPayload(r, dur, shown)); saveQueue(q);
     drawJourney();
-    renderResults(result, diagnoses, service);
+    renderResults(r);
     setStatus('wait');
     flushQueue();
   }
 
-  function buildPayload(r, diagnoses, service, dur, shown) {
+  function buildPayload(r, dur, shown) {
     var p = {
-      submission_id: S.submissionId, version: CFG.VERSION, test: TEST ? 1 : 0,
+      submission_id: S.submissionId, version: CFG.VERSION, instrument: S.bank.instrument, test: TEST ? 1 : 0,
       started_at: S.startedAt.toISOString(), finished_at: S.finishedAt.toISOString(), duration_sec: dur,
       name: S.user.name, gender: S.user.gender, school: S.user.school, school_code: S.user.schoolCode,
       school_from_link: S.user.schoolFromLink ? 1 : 0, stage: S.user.stage, grade: S.user.grade, track: S.user.track,
       consent: 1, consent_mode: 'assent_on_start',
-      items_shown: shown, order: S.form.order.join(' '), bank_drawn: S.form.bankDrawn.join(' '),
-      cap_score: r.capability.score, cap_level: r.capability.level,
-      cx_score: r.complexity.score, cx_level: r.complexity.level,
-      service_level: service ? service.level : '', service_basis: service ? service.basis : '',
-      service_raised: service && service.raisedByFollowup ? 1 : 0,
-      holland_code: r.interests ? r.interests.code : '', holland_top: r.interests ? r.interests.top : '',
-      holland_diff: r.interests ? r.interests.differentiation : '', holland_clarity: r.interests ? r.interests.clarity : '',
-      holland_consistency: r.interests ? r.interests.consistency : '',
-      diagnoses: diagnoses.map(function (d) { return d.code; }).join(' '),
-      followups: Object.keys(S.fu).join(' '),
+      items_shown: shown, order: S.form.order.join(' '),
+      cx_high: r.complexity.high.join(' '), cx_high_n: r.complexity.high.length,
+      barrier_present: r.barriers.present.join(' '), barrier_count: r.barriers.presentCount, barrier_total: r.barriers.countedTotal,
+      barrier_big: r.barriers.big.join(' '),
+      cap_strongest: r.capability.strongest || '', cap_weakest: r.capability.weakest || '',
       attention_pass: r.quality.attentionPass == null ? '' : (r.quality.attentionPass ? 1 : 0),
+      attention_failed: r.quality.attentionFailed, longstring: r.quality.longstring, same_share: r.quality.sameShare,
       straightline: r.quality.straightline ? 1 : 0, fast: r.quality.fast ? 1 : 0
     };
-    Object.keys(r.facets).forEach(function (k) { p['facet_' + k] = r.facets[k].score; });
-    if (r.interests) E.HEX.forEach(function (t) { p['holland_' + t] = r.interests.scores[t]; });
-    Object.keys(S.responses).sort().forEach(function (k) { p['i_' + k] = S.responses[k]; });
-    Object.keys(S.fu).sort().forEach(function (k) { p['f_' + k] = S.fu[k]; });
+    Object.keys(r.facets).forEach(function (k) { p['f_' + k] = r.facets[k].mean; });
+    // الإجابات الخام كما اختارها المستجيب (قبل قلب البنود العكسية)
+    S.bank.items.forEach(function (it) { if (S.responses[it.id] != null) p['i_' + it.id] = S.responses[it.id]; });
     return p;
   }
 
   function setStatus(kind) {
     var el = $('save-status');
-    if (!CFG.ENDPOINT) { el.innerHTML = '<span class="status wait">وضع المعاينة: الحفظ غير مربوط بعد</span>'; return; }
-    var m = { ok: ['ok', 'تم حفظ إجاباتك'], wait: ['wait', 'جار حفظ إجاباتك…'], err: ['err', 'لم يكتمل الحفظ بعد، وسيعاد تلقائيا. الرجاء إبقاء الصفحة مفتوحة.'] }[kind];
+    if (!CFG.ENDPOINT) { el.innerHTML = '<span class="status wait">وضع المعاينة: الحفظ غير مربوط</span>'; return; }
+    var m = { ok: ['ok', 'تم حفظ إجاباتك'], wait: ['wait', 'جار حفظ إجاباتك…'], err: ['err', 'لم يكتمل الحفظ بعد، وسيعاد تلقائيا. أبق الصفحة مفتوحة من فضلك.'] }[kind];
+    if (kind === 'err' && fem()) m[1] = m[1].replace('أبق', 'أبقي');
     el.innerHTML = '<span class="status ' + m[0] + '">' + m[1] + '</span>';
   }
 
@@ -323,102 +301,50 @@
       .catch(function () { flushing = false; if (p.submission_id === S.submissionId) setStatus('err'); });
   }
 
-  /* ── النتائج ── */
+  /* ── النتيجة: وصفية فقط ── */
   function counselor() { return g('المرشد الطلابي', 'المرشدة الطلابية'); }
-  /* تسميات للطالبة؛ التسميات البحثية (خدمة ذاتية...) تبقى في البيانات ولوحة التحكم */
-  function serviceLabel(level) {
-    return {
-      self: 'المتابعة بنفسك',
-      brief: 'لقاء قصير مع ' + counselor(),
-      brief_group: 'برنامج جماعي مع ' + counselor(),
-      individual: 'لقاء فردي مع ' + counselor()
-    }[level];
-  }
-  function serviceText(level) {
-    return {
-      self: g('تستطيع المتابعة بنفسك: ابحث في التخصصات التي تهمك، وارجع إلى ', 'تستطيعين المتابعة بنفسك: ابحثي في التخصصات التي تهمك، وارجعي إلى ') + counselor() + g(' متى احتجت.', ' متى احتجت.'),
-      brief: 'لقاء قصير أو ورشة مع ' + counselor() + ' يكفي ليوضح لك الصورة.',
-      brief_group: 'برنامج جماعي مع ' + counselor() + ' يساعدك على بناء قرارك خطوة خطوة.',
-      individual: 'لقاء فردي مع ' + counselor() + ' هو الأنسب لك الآن.'
-    }[level];
-  }
-  var CONS_TEXT = {
-    high: 'أعلى نمطين لديك متجاوران على الشكل السداسي، أي أن تفضيلاتك متسقة.',
-    medium: 'أعلى نمطين لديك متقاربان بدرجة متوسطة.',
-    low: 'أعلى نمطين لديك متباعدان على الشكل السداسي، وقد يفيدك استكشافهما مع المرشد.'
-  };
-  var HL = { R: 'واقعي', I: 'بحثي', A: 'فني', S: 'اجتماعي', E: 'مبادر', C: 'تقليدي' };
-  function lvColor(v) { return v >= 70 ? 'var(--good)' : v >= 45 ? 'var(--warn)' : 'var(--bad)'; }
-  function bar(label, v) {
-    return '<div class="bar"><div class="t"><span>' + esc(label) + '</span><span>' + (v == null ? '—' : ar(Math.round(v)) + '٪') + '</span></div>' +
-      '<div class="b"><div style="width:' + (v || 0) + '%;background:' + lvColor(v || 0) + '"></div></div></div>';
+  function bar(label, mean, cls) {
+    var w = mean == null ? 0 : Math.round((mean - 1) / 4 * 100);
+    return '<div class="bar"><div class="t"><span>' + esc(label) + '</span></div>' +
+      '<div class="b"><div class="' + cls + '" style="width:' + w + '%"></div></div></div>';
   }
 
-  function hexSvg(scores, top) {
-    var order = ['R', 'I', 'A', 'S', 'E', 'C'];
-    var mx = Math.max.apply(null, order.map(function (t) { return scores[t]; })) || 1;
-    function pt(i, r) { var a = (-90 + i * 60) * Math.PI / 180; return [Math.round(r * Math.cos(a) * 10) / 10, Math.round(r * Math.sin(a) * 10) / 10]; }
-    var grid = [0.33, 0.66, 1].map(function (k) {
-      return '<polygon class="grid" points="' + order.map(function (_, i) { return pt(i, 100 * k).join(','); }).join(' ') + '"/>';
-    }).join('') + order.map(function (_, i) { var p = pt(i, 100); return '<line class="grid" x1="0" y1="0" x2="' + p[0] + '" y2="' + p[1] + '"/>'; }).join('');
-    var shape = order.map(function (t, i) { return pt(i, 12 + 88 * scores[t] / mx).join(','); }).join(' ');
-    var dots = order.map(function (t, i) { var p = pt(i, 12 + 88 * scores[t] / mx); return '<circle class="dot" cx="' + p[0] + '" cy="' + p[1] + '" r="4"/>'; }).join('');
-    var labels = order.map(function (t, i) {
-      var p = pt(i, 122);
-      return '<text class="lbl' + (t === top ? ' top' : '') + '" x="' + p[0] + '" y="' + (p[1] + 5) + '">' + HL[t] + ' ' + t + '</text>';
-    }).join('');
-    return grid + '<polygon class="shape" points="' + shape + '"/>' + dots + labels;
-  }
-
-  function renderResults(r, diagnoses, service) {
+  function renderResults(r) {
     var first = S.user.name.split(/\s+/)[0];
-    $('r-hello').textContent = g('أحسنت يا ', 'أحسنت يا ') + first;
+    $('r-hello').textContent = 'أحسنت يا ' + first;
     $('r-lead').textContent = 'هذه صورة لوضعك اليوم، وتتغير كلما ' + g('عرفت', 'عرفت') + ' أكثر. ' + g('اعرضها على ', 'اعرضيها على ') + counselor() + g(' ليساعدك', ' لتساعدك') + ' في خطوتك التالية.';
 
-    var cap = r.capability;
-    var score = cap.score == null ? 0 : Math.round(cap.score);
-    $('r-cap-score').textContent = cap.score == null ? '—' : ar(score) + '٪';
-    var ring = $('r-ring');
-    ring.style.stroke = lvColor(score);
-    setTimeout(function () { ring.style.strokeDashoffset = String(314.16 * (1 - score / 100)); }, 120);
-    var pill = $('r-cap-level');
-    pill.textContent = cap.level ? 'جاهزية ' + E.LEVEL_LABELS[cap.level] : '';
-    pill.className = 'level-pill lv-' + (cap.level || 'medium');
-    var lt = cap.level && S.bank.levelTexts ? S.bank.levelTexts[cap.level] : null;
-    $('r-cap-text').textContent = lt ? lt.meaning + ' ' + lt.nextStep : '';
-    $('r-facets').innerHTML = S.bank.facets.filter(function (f) { return f.dimension === 'capability' && r.facets[f.id].n; })
-      .map(function (f) { return bar(f.label, r.facets[f.id].score); }).join('');
-
-    var cx = S.bank.facets.filter(function (f) { return f.dimension === 'complexity' && r.facets[f.id].n; });
-    $('card-complexity').hidden = !cx.length;
-    $('r-complexity').innerHTML = cx.map(function (f) { return bar(f.label, r.facets[f.id].score); }).join('');
-
-    $('r-service').innerHTML = service ?
-      '<span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3 L15 12 L12 21 L9 12 Z" fill="currentColor"/></svg></span>' +
-      '<div><b>' + esc(serviceLabel(service.level)) + '</b>' + esc(serviceText(service.level)) + '</div>' : '';
-    var seen = {};
-    $('r-diagnoses').innerHTML = diagnoses.filter(function (d) {
-      if (d.code === 'none' || d.code === 'shared_ok' || seen[d.code]) return false;
-      seen[d.code] = true; return true;
-    }).map(function (d) { return '<div class="diag"><b>' + esc(d.label) + '</b>' + esc(d.recommendation) + '</div>'; }).join('');
-
-    var it = r.interests;
-    if (it) {
-      var prof = S.bank.profiles[it.top] || {};
-      $('r-hex').innerHTML = hexSvg(it.scores, it.top);
-      $('r-code').textContent = it.code;
-      $('r-name').textContent = prof.name || '';
-      $('r-desc').textContent = prof.desc || '';
-      $('r-consistency').textContent = CONS_TEXT[it.consistency] || '';
-      $('r-sectors').innerHTML = (prof.sectors || []).map(function (s) { return '<span>' + esc(s) + '</span>'; }).join('');
-      $('r-specs').innerHTML = (prof.specs || []).map(function (s) { return '<li>' + esc(s.text) + '</li>'; }).join('');
+    // المكوّن الأول
+    $('r-cap').innerHTML = r.capability.facets.map(function (id) { return bar(S.fm[id].studentLabel, r.facets[id].mean, 'fill-cap'); }).join('');
+    var hl = '';
+    if (r.capability.strongest) {
+      hl = '<div class="hl-row"><span class="hl-tag good">' + g('الأوضح لديك', 'الأوضح لديك') + '</span>' + esc(S.fm[r.capability.strongest].studentLabel) + '</div>' +
+        '<div class="hl-row"><span class="hl-tag grow">' + g('تستطيع البدء به', 'تستطيعين البدء به') + '</span>' + esc(S.fm[r.capability.weakest].studentLabel) + '</div>';
     }
+    $('r-hl').innerHTML = hl;
 
-    var sum = [
-      ['الاسم', S.user.name], ['المدرسة', S.user.school], ['الصف', S.user.grade + (S.user.track ? ' · ' + S.user.track : '')],
-      ['الجاهزية', cap.level ? E.LEVEL_LABELS[cap.level] : '—'], ['رمز هولاند', it ? it.code : '—'],
-      ['الخطوة التالية', service ? serviceLabel(service.level) : '—']
-    ];
+    // المكوّن الثاني
+    $('r-cx-note').textContent = 'طول الشريط يعني أثرا أكبر لهذا الجانب في قرارك، ولا يعني أنك ' + g('غير مستعد', 'غير مستعدة') + '.';
+    $('r-cx').innerHTML = r.complexity.facets.map(function (id) { return bar(S.fm[id].studentLabel, r.facets[id].mean, 'fill-cx'); }).join('');
+
+    // العوائق
+    var itemById = {}; S.bank.items.forEach(function (it) { itemById[it.id] = it; });
+    var named = r.barriers.rated.filter(function (b) { return b.value >= 3; });
+    $('r-barriers').innerHTML = named.length ?
+      '<p class="muted">' + 'ذكرت' + ' أن هذه الأمور تقف أمام اختيارك بدرجة متوسطة أو كبيرة:</p><ul class="blist">' +
+      named.map(function (b) { return '<li><span>' + esc(itemById[b.id].text.replace(/\.$/, '')) + '</span><em>' + esc(S.bank.scales.barrier[b.value - 1]) + '</em></li>'; }).join('') + '</ul>' +
+      '<p class="muted">' + g('تحدث', 'تحدثي') + ' عنها مع ' + counselor() + '؛ فبعضها له حلول لا تظهر في البداية.</p>'
+      : '<p class="muted">لم ' + g('تذكر', 'تذكري') + ' أمورا تقف أمام اختيارك بدرجة متوسطة أو كبيرة.</p>';
+
+    // الخطوة التالية: اقتراح عملي للجانب الأقل وضوحا، ثم الحديث مع المرشد أو المرشدة
+    var tip = '';
+    if (r.capability.weakest) { var f = S.fm[r.capability.weakest]; tip = fem() ? f.tipF : f.tip; }
+    $('r-next').innerHTML =
+      (tip ? '<div class="service"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3 L15 12 L12 21 L9 12 Z" fill="currentColor"/></svg></span><div><b>' + g('ابدأ بخطوة صغيرة', 'ابدئي بخطوة صغيرة') + '</b>' + esc(tip) + '</div></div>' : '') +
+      '<p class="muted" style="margin-top:12px">' + g('اعرض', 'اعرضي') + ' هذه الصفحة على ' + counselor() + '، ' + g('واتفق', 'واتفقي') + ' معه' + g('', 'ا') + ' على ما ' + g('تحتاجه', 'تحتاجينه') + ' في الفترة القادمة.</p>';
+
+    var sum = [['الاسم', S.user.name], ['المدرسة', S.user.school], ['الصف', S.user.grade + (S.user.track ? ' · ' + S.user.track : '')],
+      ['التاريخ', S.finishedAt.toLocaleDateString('ar-SA')]];
     $('r-summary').innerHTML = sum.map(function (s) { return '<div><dt>' + esc(s[0]) + '</dt><dd>' + esc(s[1]) + '</dd></div>'; }).join('');
     show('screen-results');
   }

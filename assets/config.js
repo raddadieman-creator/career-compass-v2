@@ -6,7 +6,7 @@ window.CC_CONFIG = {
   ENDPOINT: 'https://script.google.com/macros/s/AKfycbzh5xuovpyCGwmUSqXCSA-gJtG2AMtIiywOVjUDFH9E3fbNXzU5sODVz-2JFDbOTUMM/exec',
 
   // رقم نسخة المقياس — يُحفظ مع كل استجابة، فلا تختلط بيانات النسخ
-  VERSION: '2.0.0-draft',
+  VERSION: '3.0.0-pilot',
 
   // المدارس المشاركة. تظهر للطالبة بعد اختيار صفها، مدارس مرحلتها فقط
   SCHOOLS: [
@@ -31,8 +31,6 @@ window.CC_CONFIG = {
     'المسار الشرعي'
   ],
 
-  // عدد بنود البنك التي تُسحب عشوائياً لكل طالبة
-  BANK_PER_STUDENT: 7,
 
   // زمن الانتقال بين الأسئلة (بالملي ثانية)
   TRANSITION_MS: 180

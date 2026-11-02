@@ -1,57 +1,78 @@
-// اختبارات محرك التصحيح: node tests/engine.test.js
+// اختبارات المحرك: node tests/engine.test.js
 const assert = require('assert');
 const path = require('path');
 const E = require(path.join(__dirname, '..', 'assets', 'engine.js'));
 const bank = require(path.join(__dirname, '..', 'data', 'items.json'));
 
 function seeded(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+const scored = bank.items.filter(i => i.role === 'scored');
 
-// 1) بناء النموذج: كل البنود الأساسية حاضرة لكل مرحلة، والترتيب يختلف بين طالبتين
+// 1) أعداد البنود في كل نسخة كما في بطاقة تعريف الأداة
+const expect = { intermediate: { scored: 45, barrier: 5, support: 2, total: 52 }, secondary: { scored: 44, barrier: 7, support: 2, total: 53 } };
 ['intermediate', 'secondary'].forEach(stage => {
-  const f1 = E.buildForm(bank, { stage, rng: seeded(1) });
-  const f2 = E.buildForm(bank, { stage, rng: seeded(2) });
-  const core = bank.items.filter(i => i.role !== 'bank').map(i => i.id).sort();
-  assert.deepStrictEqual(f1.order.slice().sort(), core, 'all non-bank items present');
-  assert.notDeepStrictEqual(f1.order, f2.order, 'orders differ between students');
-  f1.stations.forEach(s => s.items.forEach(it => {
-    if (it.type === 'ordinal') assert.deepStrictEqual(it.options.map(o => o._idx), it.options.map((_, i) => i), 'ordinal options keep order');
-  }));
+  const f = E.buildForm(bank, { stage, rng: seeded(1) });
+  const ids = f.order;
+  const byRole = r => bank.items.filter(i => i.role === r && ids.includes(i.id)).length;
+  assert.strictEqual(byRole('scored'), expect[stage].scored, stage + ' scored');
+  assert.strictEqual(byRole('barrier'), expect[stage].barrier, stage + ' barriers');
+  assert.strictEqual(byRole('support'), expect[stage].support, stage + ' support');
+  assert.strictEqual(byRole('attention'), 2, stage + ' attention');
+  assert.strictEqual(ids.length, expect[stage].total + 2, stage + ' total shown');
+  assert.strictEqual(new Set(ids).size, ids.length, 'no duplicates');
+  const f2 = E.buildForm(bank, { stage, rng: seeded(7) });
+  assert.notDeepStrictEqual(f.order, f2.order, 'order differs between students');
+  assert.deepStrictEqual(f.order.slice().sort(), f2.order.slice().sort(), 'same item set');
+  // العوائق في المحطة الأخيرة وحدها
+  const last = f.stations[f.stations.length - 1];
+  assert.strictEqual(last.station.id, 'barriers');
+  assert.ok(last.items.every(i => i.role === 'barrier'));
 });
+assert.strictEqual(scored.filter(i => i.stage === 'both').length, 41, '41 shared scored items');
 
-// 2) الدرجات: أعلى خيار في كل بنود الإسناد → 100، وأدنى خيار → 0
-const cap = bank.items.filter(i => i.dimension === 'capability' && i.role === 'core');
-let r = {}; cap.forEach(i => r[i.id] = i.options.length);
-let s = E.score(bank, r);
-assert.strictEqual(s.capability.score, 100); assert.strictEqual(s.capability.level, 'high');
-r = {}; cap.forEach(i => r[i.id] = 1);
-s = E.score(bank, r);
-assert.strictEqual(s.capability.score, 0); assert.strictEqual(s.capability.level, 'low');
-assert.strictEqual(s.complexity.measured, false, 'complexity has no items yet');
-assert.strictEqual(s.service.level, 'brief_group'); assert.strictEqual(s.service.basis, 'capability_only');
+// 2) القلب: RC4 هو البند العكسي الوحيد
+assert.deepStrictEqual(bank.items.filter(i => i.reverse).map(i => i.id), ['RC4']);
+let r = {};
+bank.items.filter(i => i.facet === 'RC').forEach(i => r[i.id] = 5);
+let s = E.score(bank, r, { stage: 'secondary' });
+assert.strictEqual(s.facets.RC.mean, Math.round((5 * 5 + 1) / 6 * 100) / 100, 'RC4=5 becomes 1');
 
-// 3) المتابعة: الدرجات المنخفضة تفتح أسئلة متابعة بحد أقصى 4
-const fus = E.followupsFor(bank, s, 'secondary');
-assert.ok(fus.length > 0 && fus.length <= 4);
-r = {}; cap.forEach(i => r[i.id] = i.options.length);
-assert.strictEqual(E.followupsFor(bank, E.score(bank, r), 'secondary').length, 0, 'no follow-ups when high');
+// 3) متوسطات الجوانب ونطاقها، ودون درجة كلية
+r = {}; scored.forEach(i => r[i.id] = i.reverse ? 1 : 5);
+s = E.score(bank, r, { stage: 'intermediate' });
+Object.keys(s.facets).forEach(k => assert.strictEqual(s.facets[k].mean, 5, k));
+assert.strictEqual(s.capability.strongest, null, 'no strongest when all equal');
+assert.deepStrictEqual(s.complexity.high, ['SR', 'FF', 'PR']);
+assert.ok(!('total' in s) && !('level' in s.capability), 'no total score, no level');
 
-// 4) التشخيص ورفع مستوى الخدمة
-const dg = E.diagnose(bank, { FU04: 'indecisive' });
-assert.strictEqual(dg[0].code, 'indecisive');
-assert.strictEqual(E.finalService({ level: 'brief' }, dg).level, 'individual');
+// 4) الجانب الأعلى والأدنى نسبيا
+r = {}; scored.forEach(i => r[i.id] = 3);
+bank.items.filter(i => i.facet === 'OK').forEach(i => r[i.id] = 5);
+bank.items.filter(i => i.facet === 'LM').forEach(i => r[i.id] = 1);
+s = E.score(bank, r, { stage: 'secondary' });
+assert.strictEqual(s.capability.strongest, 'OK'); assert.strictEqual(s.capability.weakest, 'LM');
+assert.deepStrictEqual(s.complexity.high, []);
 
-// 5) الميول: اختيار خيار R الخالص يعطي R أولاً
-const prof = bank.items.filter(i => i.type === 'profile');
-r = {};
-prof.forEach(i => { let best = 0, bi = 0; i.options.forEach((o, k) => { const v = (o.scores.R || 0); if (v > best) { best = v; bi = k; } }); r[i.id] = bi; });
-s = E.score(bank, r);
-assert.strictEqual(s.interests.top, 'R');
-assert.ok(['high', 'medium', 'low'].includes(s.interests.consistency));
+// 5) العوائق: العدد داخل النسخة، وCN5 خارج العدد
+r = {}; bank.items.filter(i => i.role === 'barrier').forEach(i => r[i.id] = 4);
+s = E.score(bank, r, { stage: 'intermediate' });
+assert.strictEqual(s.barriers.countedTotal, 4); assert.strictEqual(s.barriers.presentCount, 4);
+assert.ok(!s.barriers.present.includes('CN5') && s.barriers.big.includes('CN5'));
+s = E.score(bank, r, { stage: 'secondary' });
+assert.strictEqual(s.barriers.countedTotal, 6); assert.strictEqual(s.barriers.presentCount, 6);
+r.CN1 = 2; s = E.score(bank, r, { stage: 'secondary' });
+assert.strictEqual(s.barriers.presentCount, 5);
 
-// 6) الجودة: الإجابة النمطية تُعلَّم
-r = {}; cap.forEach(i => r[i.id] = 2);
-assert.strictEqual(E.score(bank, r).quality.straightline, true);
-r['ATT01'] = 2; assert.strictEqual(E.score(bank, r).quality.attentionPass, true);
-r['ATT01'] = 4; assert.strictEqual(E.score(bank, r).quality.attentionPass, false);
+// 6) الدعم لا يدخل في أي جانب
+r = {}; scored.forEach(i => r[i.id] = 3); r.SP1 = 5; r.SP2 = 1;
+s = E.score(bank, r, { stage: 'secondary' });
+assert.deepStrictEqual(s.support, { SP1: 5, SP2: 1 });
+assert.strictEqual(s.facets.SR.mean, 3); assert.strictEqual(s.facets.FF.mean, 3);
+
+// 7) الجودة
+r = {}; scored.forEach(i => r[i.id] = 4); r.AT1 = 4; r.AT2 = 1;
+s = E.score(bank, r, { stage: 'secondary', durationSec: 300, itemsShown: 55 });
+assert.strictEqual(s.quality.attentionPass, true); assert.strictEqual(s.quality.straightline, true); assert.strictEqual(s.quality.fast, false);
+r.AT2 = 3; s = E.score(bank, r, { stage: 'secondary', durationSec: 60, itemsShown: 55 });
+assert.strictEqual(s.quality.attentionPass, false); assert.strictEqual(s.quality.fast, true);
 
 console.log('engine tests passed');
