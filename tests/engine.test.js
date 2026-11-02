@@ -94,4 +94,14 @@ const sb = Object.assign({}, bank, { items: bank.items.filter(i => keep.has(i.id
 });
 assert.strictEqual(sb.items.filter(i => i.role === 'scored' && i.stage === 'both').length, 30, '30 shared scored items in short form');
 
+// 10) نموذج التجربة الاستطلاعية: خمس عبارات لكل جانب عدا FF (أربع)
+const k5 = new Set(bank.forms.pilot5);
+const pb = Object.assign({}, bank, { items: bank.items.filter(i => k5.has(i.id)) });
+[['intermediate', 46], ['secondary', 48]].forEach(([stage, n]) => {
+  const f = E.buildForm(pb, { stage, rng: seeded(9) });
+  assert.strictEqual(f.order.length, n, stage + ' pilot5 total');
+  ['SK', 'OK', 'LM', 'DS', 'RC', 'SR', 'PR'].forEach(fc => assert.strictEqual(pb.items.filter(i => i.facet === fc && f.order.includes(i.id)).length, 5, stage + ' ' + fc));
+  assert.strictEqual(pb.items.filter(i => i.facet === 'FF' && f.order.includes(i.id)).length, 4);
+});
+
 console.log('engine tests passed');
