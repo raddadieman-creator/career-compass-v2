@@ -65,6 +65,7 @@ td.n{font-variant-numeric:tabular-nums;text-align:center}
   <label>المدرسة<select id="f-school"></select></label>
   <label>المرحلة<select id="f-stage"><option value="">الكل</option><option value="intermediate">المتوسطة</option><option value="secondary">الثانوية</option></select></label>
   <label>الصف<select id="f-grade"></select></label>
+  <label>النموذج<select id="f-form"></select></label>
   <label>من تاريخ<input type="date" id="f-from"></label>
   <label>إلى تاريخ<input type="date" id="f-to"></label>
   <label>بحث بالاسم<input type="text" id="f-q"></label>
@@ -72,8 +73,10 @@ td.n{font-variant-numeric:tabular-nums;text-align:center}
   <label class="chk"><input type="checkbox" id="f-notest" checked>استبعاد التجريبي</label>
   <label class="chk"><input type="checkbox" id="f-quality">استبعاد ما يحتاج مراجعة</label>
   <label class="chk"><input type="checkbox" id="f-sig">من لديهم إشارات داخلية فقط</label>
+  <label class="chk"><input type="checkbox" id="f-dup">أسماء متكررة للمراجعة</label>
   <button class="btn" id="b-reload">تحديث</button>
   <button class="btn primary" id="b-export">تصدير المعروض إلى ورقة</button>
+  <button class="btn" id="b-export-anon">تصدير دون أسماء</button>
 </div>
 
 <div class="tabs">
@@ -97,7 +100,7 @@ td.n{font-variant-numeric:tabular-nums;text-align:center}
   <div class="panel">
     <h2 id="t-title">الطلبة</h2>
     <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-    <p class="note">اضغطي على أي صف لعرض تقرير الطالبة وطباعته. «يحتاج مراجعة» يعني: خطأ في عبارة التركيز، أو 90% فأكثر من الإجابات بالقيمة نفسها، أو أقل من ثانيتين للعبارة في المتوسط.</p>
+    <p class="note">اضغطي على أي صف لعرض تقرير الطالبة وطباعته. «آخر محاولة» تُحدد بالاسم والمدرسة والصف والجهاز معا. «يحتاج مراجعة» يعني: خطأ في عبارة التركيز، أو 90% فأكثر من الإجابات بالقيمة نفسها، أو أقل من ثانيتين للعبارة في المتوسط.</p>
   </div>
 </div>
 
@@ -145,32 +148,55 @@ function load() {
   $('sub').textContent = 'جار تحميل البيانات…';
   google.script.run.withSuccessHandler(function (d) {
     var all = d.rows.map(function (row) { var o = {}; d.header.forEach(function (h, i) { o[h] = row[i]; }); return o; });
-    RAW = all.filter(function (r) { return r.instrument === META.instrument; });
-    var maxAttempt = {};
-    RAW.forEach(function (r) { var k = r.student_key; if (!maxAttempt[k] || Number(r.attempt) > maxAttempt[k]) maxAttempt[k] = Number(r.attempt); });
-    RAW.forEach(function (r) { r._latest = Number(r.attempt) === maxAttempt[r.student_key]; });
+    var mine = all.filter(function (r) { return r.instrument === META.instrument; });
+    RAW = mine.filter(valid);
+    var bad = mine.length - RAW.length;
+    // المحاولة الأخيرة: الاسم والمدرسة والصف والجهاز معا، في السجلات غير التجريبية فقط.
+    // فطالبتان بالاسم نفسه على جهازين مختلفين لا تختفي إحداهما.
+    var last = {}, devs = {};
+    RAW.forEach(function (r) {
+      r._g = r.student_key + '|' + (r.device_id || r.submission_id) + '|' + (String(r.test) === '1' ? 't' : '');
+      var t = String(r.finished_at || r.received_at);
+      if (!last[r._g] || t > last[r._g]) last[r._g] = t;
+      if (String(r.test) !== '1') { devs[r.student_key] = devs[r.student_key] || {}; devs[r.student_key][r.device_id || r.submission_id] = true; }
+    });
+    RAW.forEach(function (r) {
+      r._latest = String(r.finished_at || r.received_at) === last[r._g];
+      r._dup = String(r.test) !== '1' && Object.keys(devs[r.student_key] || {}).length > 1;
+    });
     fillFilters();
     apply();
-    $('sub').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-SA') + ' · سجلات هذه النسخة من الأداة: ' + RAW.length + (all.length > RAW.length ? ' · سجلات نسخ سابقة مستبعدة: ' + (all.length - RAW.length) : '');
+    $('sub').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-SA-u-ca-gregory') + ' · سجلات هذه النسخة من الأداة: ' + RAW.length +
+      (bad ? ' · سجلات ناقصة أو خارج المدى مستبعدة: ' + bad : '') + (all.length > mine.length ? ' · سجلات نسخ سابقة مستبعدة: ' + (all.length - mine.length) : '');
   }).withFailureHandler(function (e) { $('sub').textContent = 'تعذر تحميل البيانات: ' + e.message; }).getData();
 }
 
+/* السجل الصالح: كل عبارة في ترتيب العرض لها إجابة داخل مدى سلمها */
+function valid(r) {
+  var ids = String(r.order || '').split(' ').filter(Boolean);
+  if (!ids.length || ids.length !== Number(r.items_shown)) return false;
+  return ids.every(function (id) { var it = ITEM[id], v = num(r['i_' + id]); return it && v != null && v >= 1 && v <= META.scales[it.scale].length && v === Math.round(v); });
+}
 function opts(sel, values) {
   var cur = sel.value;
   sel.innerHTML = '<option value="">الكل</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
   sel.value = values.indexOf(cur) >= 0 ? cur : '';
 }
 function uniq(k) { return RAW.map(function (r) { return r[k]; }).filter(function (v, i, a) { return v !== '' && a.indexOf(v) === i; }).sort(); }
-function fillFilters() { opts($('f-school'), uniq('school')); opts($('f-grade'), uniq('grade')); }
+function fillFilters() { opts($('f-school'), uniq('school')); opts($('f-grade'), uniq('grade')); opts($('f-form'), uniq('form')); }
 
 function apply() {
   var f = { school: $('f-school').value, stage: $('f-stage').value, grade: $('f-grade').value, from: $('f-from').value, to: $('f-to').value,
-    q: $('f-q').value.trim(), latest: $('f-latest').checked, notest: $('f-notest').checked, quality: $('f-quality').checked, sig: $('f-sig').checked };
+    q: $('f-q').value.trim(), latest: $('f-latest').checked, notest: $('f-notest').checked, quality: $('f-quality').checked, sig: $('f-sig').checked,
+    dup: $('f-dup').checked, form: $('f-form').value };
+  if (f.stage) $('ia-stage').value = f.stage;
   ROWS = RAW.filter(function (r) {
     if (f.latest && !r._latest) return false;
     if (f.notest && String(r.test) === '1') return false;
     if (f.quality && needsReview(r)) return false;
     if (f.sig && !signals(r).length) return false;
+    if (f.dup && !r._dup) return false;
+    if (f.form && r.form !== f.form) return false;
     if (f.school && r.school !== f.school) return false;
     if (f.stage && r.stage !== f.stage) return false;
     if (f.grade && r.grade !== f.grade) return false;
@@ -197,7 +223,8 @@ function kpis() {
     card('وسيط مدة التطبيق', dur == null ? '—' : (dur / 60).toFixed(1) + ' د', 'بالدقائق') +
     card('اجتياز عبارتي التركيز', attN ? Math.round(att / attN * 100) + '%' : '—', att + ' من ' + attN) +
     card('يحتاج مراجعة', rev, 'قبل التحليل') +
-    card('إشارات داخلية', sig, 'للمرشدة فقط');
+    card('إشارات داخلية', sig, 'للمرشدة فقط') +
+    card('أسماء متكررة', ROWS.filter(function (r) { return r._dup; }).length, 'الاسم نفسه من أجهزة مختلفة: راجعيها');
 }
 
 function chart(id, type, labels, datasets, yopts, horizontal) {
@@ -290,28 +317,30 @@ function itemAnalysis() {
   if (rows.length < 5) { $('ia').innerHTML = '<p class="empty">يلزم 5 استجابات على الأقل في هذه النسخة لعرض المؤشرات.</p>'; return; }
   var html = '';
   CAP.concat(CX).forEach(function (f) {
-    var its = META.items.filter(function (i) { return i.facet === f.id && i.role === 'scored' && applies(i, stage); });
+    var its = META.items.filter(function (i) { return i.facet === f.id && i.role === 'scored' && applies(i, stage) && rows.some(function (r) { return num(r['i_' + i.id]) != null; }); });
+    if (!its.length) return;
     var comp = rows.filter(function (r) { return its.every(function (i) { return num(r['i_' + i.id]) != null; }); });
     var cols = its.map(function (i) { return comp.map(function (r) { return keyedVal(i, num(r['i_' + i.id])); }); });
     var a = comp.length >= 3 ? alpha(cols) : null;
     html += '<div class="facethead"><b>' + esc(f.label) + '</b><span>ألفا = ' + f2(a) + ' · حالات مكتملة: ' + comp.length + '</span></div>';
-    html += '<div class="tablewrap" style="max-height:none"><table><thead><tr><th>الرمز</th><th>البند</th><th>ن</th><th>المتوسط</th><th>الانحراف</th><th>% الأدنى</th><th>% الأعلى</th><th>ر مصحح</th><th>ألفا عند الحذف</th></tr></thead><tbody>';
+    html += '<div class="tablewrap" style="max-height:none"><table><thead><tr><th>الرمز</th><th>البند</th><th>ن</th><th>المتوسط</th><th>الانحراف</th><th>التوزيع 1/2/3/4/5 (%)</th><th>% الأدنى</th><th>% الأعلى</th><th>ر مصحح</th><th>ألفا عند الحذف</th></tr></thead><tbody>';
     its.forEach(function (it, j) {
       var v = rows.map(function (r) { return num(r['i_' + it.id]); }).filter(function (x) { return x != null; }).map(function (x) { return keyedVal(it, x); });
       var max = META.scales[it.scale].length;
       var lo = v.length ? v.filter(function (x) { return x === 1; }).length / v.length * 100 : null;
       var hi = v.length ? v.filter(function (x) { return x === max; }).length / v.length * 100 : null;
+      var dist = []; for (var q2 = 1; q2 <= max; q2++) dist.push(v.length ? Math.round(v.filter(function (x) { return x === q2; }).length / v.length * 100) : '—');
       var rest = comp.map(function (_, i) { var s = 0; cols.forEach(function (c, q) { if (q !== j) s += c[i]; }); return s; });
       var rit = comp.length >= 3 ? corr(cols[j], rest) : null;
       var aDel = cols.length > 2 && comp.length >= 3 ? alpha(cols.filter(function (_, q) { return q !== j; })) : null;
-      html += '<tr><td>' + esc(it.id) + (it.reverse ? ' ↺' : '') + '</td><td style="white-space:normal;min-width:260px">' + esc(it.text) + '</td><td class="n">' + v.length + '</td><td class="n">' + f2(v.length ? mean(v) : null) + '</td><td class="n">' + f2(sd(v)) + '</td>' +
+      html += '<tr><td>' + esc(it.id) + (it.reverse ? ' ↺' : '') + '</td><td style="white-space:normal;min-width:260px">' + esc(it.text) + '</td><td class="n">' + v.length + '</td><td class="n">' + f2(v.length ? mean(v) : null) + '</td><td class="n">' + f2(sd(v)) + '</td><td class="n">' + dist.join(' / ') + '</td>' +
         '<td class="n ' + (lo > 80 ? 'warnc' : '') + '">' + (lo == null ? '—' : Math.round(lo)) + '</td><td class="n ' + (hi > 80 ? 'warnc' : '') + '">' + (hi == null ? '—' : Math.round(hi)) + '</td>' +
         '<td class="n ' + (rit != null && rit < 0.3 ? 'warnc' : '') + '">' + f2(rit) + '</td><td class="n">' + f2(aDel) + '</td></tr>';
     });
     html += '</tbody></table></div>';
   });
   // العوائق والدعم: توزيع فقط
-  var other = META.items.filter(function (i) { return (i.role === 'barrier' || i.role === 'support') && applies(i, stage); });
+  var other = META.items.filter(function (i) { return (i.role === 'barrier' || i.role === 'support') && applies(i, stage) && rows.some(function (r) { return num(r['i_' + i.id]) != null; }); });
   html += '<div class="facethead"><b>مؤشرات العوائق والدعم</b><span>توزيع الإجابات فقط؛ لا يُحسب لها اتساق داخلي</span></div><div class="tablewrap" style="max-height:none"><table><thead><tr><th>الرمز</th><th>البند</th><th>ن</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead><tbody>';
   other.forEach(function (it) {
     var v = rows.map(function (r) { return num(r['i_' + it.id]); }).filter(function (x) { return x != null; });
@@ -323,21 +352,24 @@ function itemAnalysis() {
   $('ia').innerHTML = html;
 }
 
-function exportShown() {
+function exportShown(anon) {
   if (!ROWS.length) return;
-  var header = Object.keys(RAW[0]).filter(function (k) { return k.charAt(0) !== '_'; });
+  var drop = anon ? ['name', 'student_key', 'device_id', 'ua'] : [];
+  var keys = {}; RAW.forEach(function (r) { Object.keys(r).forEach(function (k) { keys[k] = true; }); });
+  var header = Object.keys(keys).filter(function (k) { return k.charAt(0) !== '_' && drop.indexOf(k) === -1; });
   var rows = ROWS.map(function (r) { return header.map(function (h) { return r[h]; }); });
   $('b-export').disabled = true;
   google.script.run.withSuccessHandler(function (name) { $('b-export').disabled = false; alert('أنشئت ورقة «' + name + '». نزليها من: ملف ← تنزيل ← CSV.'); })
     .withFailureHandler(function (e) { $('b-export').disabled = false; alert('تعذر التصدير: ' + e.message); })
-    .exportRows(header, rows, '');
+    .exportRows(header, rows, anon ? 'دون أسماء' : '');
 }
 
-['f-school', 'f-stage', 'f-grade', 'f-from', 'f-to', 'f-latest', 'f-notest', 'f-quality', 'f-sig'].forEach(function (id) { $(id).addEventListener('change', apply); });
+['f-school', 'f-stage', 'f-grade', 'f-form', 'f-from', 'f-to', 'f-latest', 'f-notest', 'f-quality', 'f-sig', 'f-dup'].forEach(function (id) { $(id).addEventListener('change', apply); });
 $('f-q').addEventListener('input', apply);
 $('ia-stage').addEventListener('change', itemAnalysis);
 $('b-reload').addEventListener('click', load);
-$('b-export').addEventListener('click', exportShown);
+$('b-export').addEventListener('click', function () { exportShown(false); });
+$('b-export-anon').addEventListener('click', function () { exportShown(true); });
 Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
   t.addEventListener('click', function () {
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (x) { x.classList.toggle('on', x === t); });

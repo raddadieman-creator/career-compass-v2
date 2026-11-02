@@ -50,13 +50,17 @@ bank.items.filter(i => i.facet === 'OK').forEach(i => r[i.id] = 5);
 bank.items.filter(i => i.facet === 'LM').forEach(i => r[i.id] = 1);
 s = E.score(bank, r, { stage: 'secondary' });
 assert.strictEqual(s.capability.strongest, 'OK'); assert.strictEqual(s.capability.weakest, 'LM');
+// فرق أقل من نصف درجة: لا يُعرض شيء
+bank.items.filter(i => i.facet === 'OK').forEach(i => r[i.id] = 3); r.OK1 = 5;  // OK = 3.33
+s = E.score(bank, r, { stage: 'secondary' });
+assert.strictEqual(s.capability.strongest, null, 'gap < 0.5 → no strongest'); assert.strictEqual(s.capability.weakest, 'LM');
 assert.deepStrictEqual(s.complexity.high, []);
 
 // 5) العوائق: العدد داخل النسخة، وCN5 خارج العدد
 r = {}; bank.items.filter(i => i.role === 'barrier').forEach(i => r[i.id] = 4);
 s = E.score(bank, r, { stage: 'intermediate' });
 assert.strictEqual(s.barriers.countedTotal, 4); assert.strictEqual(s.barriers.presentCount, 4);
-assert.ok(!s.barriers.present.includes('CN5') && s.barriers.big.includes('CN5'));
+assert.ok(!s.barriers.present.includes('CN5') && !s.barriers.big.includes('CN5'));
 s = E.score(bank, r, { stage: 'secondary' });
 assert.strictEqual(s.barriers.countedTotal, 6); assert.strictEqual(s.barriers.presentCount, 6);
 r.CN1 = 2; s = E.score(bank, r, { stage: 'secondary' });
@@ -74,5 +78,20 @@ s = E.score(bank, r, { stage: 'secondary', durationSec: 300, itemsShown: 55 });
 assert.strictEqual(s.quality.attentionPass, true); assert.strictEqual(s.quality.straightline, true); assert.strictEqual(s.quality.fast, false);
 r.AT2 = 3; s = E.score(bank, r, { stage: 'secondary', durationSec: 60, itemsShown: 55 });
 assert.strictEqual(s.quality.attentionPass, false); assert.strictEqual(s.quality.fast, true);
+
+// 8) إعادة بناء النموذج من ترتيب محفوظ
+const f0 = E.buildForm(bank, { stage: 'intermediate', rng: seeded(3) });
+const f1 = E.formFromOrder(bank, f0.order);
+assert.deepStrictEqual(f1.stations.map(s => s.items.map(i => i.id)), f0.stations.map(s => s.items.map(i => i.id)));
+
+// 9) النموذج المختصر: أربع عبارات لكل جانب في كل مرحلة
+const keep = new Set(bank.forms.short);
+const sb = Object.assign({}, bank, { items: bank.items.filter(i => keep.has(i.id)) });
+[['intermediate', 39], ['secondary', 41]].forEach(([stage, n]) => {
+  const f = E.buildForm(sb, { stage, rng: seeded(5) });
+  assert.strictEqual(f.order.length, n, stage + ' short total');
+  ['SK', 'OK', 'LM', 'DS', 'RC', 'SR', 'FF', 'PR'].forEach(fc => assert.strictEqual(sb.items.filter(i => i.facet === fc && f.order.includes(i.id)).length, 4, stage + ' ' + fc));
+});
+assert.strictEqual(sb.items.filter(i => i.role === 'scored' && i.stage === 'both').length, 30, '30 shared scored items in short form');
 
 console.log('engine tests passed');

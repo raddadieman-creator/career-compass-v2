@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-<div id="test-banner" class="test-banner" hidden>وضع التجربة: هذه الإجابات تعلم تجريبية ولا تدخل في التحليل</div>
+<div id="test-banner" class="test-banner" hidden>وضع التجربة: هذه الإجابات تجريبية ولا تدخل في التحليل</div>
 
 <header class="topbar">
   <div class="brand">
@@ -51,14 +51,15 @@
       <h1>قرارك المهني يبدأ من هنا</h1>
       <p class="lead">في هذه الرحلة القصيرة نتأمل معا معرفتك بنفسك وبالخيارات من حولك، وطريقتك في اتخاذ القرار، وما يؤثر فيه. وفي ختامها تتضح لك صورة جاهزيتك لاتخاذ قرار مهني سليم.</p>
       <ol class="path">
-        <li><span class="stop s1">١</span><div><b>أعرف نفسي وخياراتي</b><small>ما تعرفه عن نفسك، وعن المسارات والمهن</small></div></li>
+        <li><span class="stop s1">١</span><div><b>أعرف نفسي وخياراتي</b><small>ما أعرفه عن نفسي، وعن المسارات والمهن</small></div></li>
         <li><span class="stop s2">٢</span><div><b>كيف أقرر</b><small>المفاضلة والتخطيط والاستعداد للحسم</small></div></li>
-        <li><span class="stop s3">٣</span><div><b>من حولي وقراري</b><small>الأسرة والناس وأثرهم في اختيارك</small></div></li>
-        <li><span class="stop s5">٤</span><div><b>ما قد يقف في طريقي</b><small>ظروف قد تحد من اختيارك</small></div></li>
-        <li><span class="stop s4">★</span><div><b>نتيجتي</b><small>صورة واضحة عن وضعك، وخطوة تبدأ بها</small></div></li>
+        <li><span class="stop s3">٣</span><div><b>من حولي وقراري</b><small>الأسرة والناس وأثرهم في اختياري</small></div></li>
+        <li><span class="stop s5">٤</span><div><b>ما قد يقف في طريقي</b><small>ظروف قد تحد من اختياري</small></div></li>
+        <li><span class="stop s4">★</span><div><b>نتيجتي</b><small>صورة واضحة عن وضعي، وخطوة أبدأ بها</small></div></li>
       </ol>
       <p class="note">لا توجد إجابة صحيحة وأخرى خاطئة. الإجابة الصحيحة هي التي تشبهك.</p>
       <button class="btn primary big" id="btn-start" type="button">يلا نبدأ</button>
+      <button class="btn ghost big" id="btn-resume" type="button" hidden>متابعة من حيث توقفت</button>
       <p class="assent">الضغط على «يلا نبدأ» يعني الموافقة على المشاركة. الإجابات تستخدم للإرشاد ولأغراض البحث، ولا ينشر الاسم.</p>
     </div>
   </section>
@@ -104,12 +105,13 @@
   <section class="screen" id="screen-quiz">
     <div class="station-head">
       <span class="station-tag" id="q-station"></span>
-      <span class="q-count" id="q-count"></span>
+      <span class="q-count" id="q-count" aria-live="polite"></span>
     </div>
     <div class="station-bar"><div id="q-bar"></div></div>
+    <div class="overall"><div class="overall-bar"><div id="q-overall-bar"></div></div><span id="q-overall"></span></div>
     <div class="card qcard" id="q-card">
       <p class="q-meta" id="q-meta" hidden></p>
-      <h2 class="q-text" id="q-text"></h2>
+      <h2 class="q-text" id="q-text" tabindex="-1"></h2>
       <div class="options" id="q-options" role="radiogroup"></div>
     </div>
     <div class="q-nav">
@@ -163,7 +165,8 @@
     <div class="card">
       <h3>ملخص</h3>
       <dl class="summary" id="r-summary"></dl>
-      <button class="btn ghost print-btn" type="button" onclick="window.print()">طباعة النتيجة</button>
+      <div class="end-actions"><button class="btn ghost print-btn" type="button" onclick="window.print()">طباعة النتيجة</button><button class="btn primary" id="btn-done" type="button">إنهاء</button></div>
+      <p class="muted" id="done-msg"></p>
     </div>
   </section>
 

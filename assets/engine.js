@@ -15,7 +15,8 @@
     barrierPresent: 3,        // يُعد العائق قائما إذا كانت الإجابة 3 أو 4
     barrierBig: 4,            // «يمثل عائقا كبيرا»
     fastSecondsPerItem: 2,    // أقل من ثانيتين للبند في المتوسط يُعلَّم «سريع» للمراجعة
-    straightlineShare: 0.9    // 90% فأكثر من الإجابات بالقيمة نفسها يُعلَّم للمراجعة
+    straightlineShare: 0.9,   // 90% فأكثر من الإجابات بالقيمة نفسها يُعلَّم للمراجعة
+    highlightGap: 0.5         // لا يُعرض «الأوضح» و«تبدأ به» إلا لجانب منفرد يبتعد عن الذي يليه نصف درجة على الأقل
   };
 
   function shuffle(arr, rng) {
@@ -52,6 +53,16 @@
     return { stations: stations, order: order };
   }
 
+  /* إعادة بناء النموذج نفسه من ترتيب محفوظ (للمتابعة بعد إعادة تحميل الصفحة) */
+  function formFromOrder(bank, order) {
+    var fm = facetMap(bank), byId = {};
+    bank.items.forEach(function (it) { byId[it.id] = it; });
+    var stations = bank.stations.map(function (s) {
+      return { station: s, items: order.map(function (id) { return byId[id]; }).filter(function (it) { return it && stationOf(it, fm) === s.id; }) };
+    }).filter(function (s) { return s.items.length; });
+    return { stations: stations, order: order.slice() };
+  }
+
   function round2(x) { return Math.round(x * 100) / 100; }
 
   function scaleMax(bank, it) { return bank.scales[it.scale].length; }
@@ -80,12 +91,11 @@
     // المكوّن الأول: وصف نسبي فقط (الجانب الأعلى والأدنى لدى المستجيب نفسه)، دون درجة كلية
     var cap = compIds('capability');
     var strongest = null, weakest = null;
-    if (cap.length > 1) {
+    if (cap.length > 2) {
       var sorted = cap.slice().sort(function (a, b) { return facets[b].mean - facets[a].mean; });
-      if (facets[sorted[0]].mean > facets[sorted[sorted.length - 1]].mean) {
-        strongest = sorted[0];
-        weakest = sorted[sorted.length - 1];
-      }
+      var m = sorted.map(function (id) { return facets[id].mean; }), L = m.length;
+      if (m[0] - m[1] >= cfg.highlightGap) strongest = sorted[0];
+      if (m[L - 2] - m[L - 1] >= cfg.highlightGap) weakest = sorted[L - 1];
     }
 
     // المكوّن الثاني: ثلاث درجات مستقلة + إشارة داخلية للمرشدة
@@ -98,7 +108,7 @@
       .map(function (it) { return { id: it.id, value: Number(responses[it.id]) }; });
     var counted = bItems.filter(function (it) { return !it.excludeFromCount; });
     var present = counted.filter(function (it) { return Number(responses[it.id]) >= cfg.barrierPresent; }).map(function (it) { return it.id; });
-    var big = bItems.filter(function (it) { return Number(responses[it.id]) >= cfg.barrierBig; }).map(function (it) { return it.id; });
+    var big = counted.filter(function (it) { return Number(responses[it.id]) >= cfg.barrierBig; }).map(function (it) { return it.id; });
 
     // الدعم: كل مؤشر منفردا، دون أي درجة
     var support = {};
@@ -139,5 +149,5 @@
     };
   }
 
-  return { DEFAULTS: DEFAULTS, buildForm: buildForm, score: score, forStage: forStage, keyed: keyed };
+  return { DEFAULTS: DEFAULTS, buildForm: buildForm, formFromOrder: formFromOrder, score: score, forStage: forStage, keyed: keyed };
 });

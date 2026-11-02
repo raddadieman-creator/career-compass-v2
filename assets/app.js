@@ -8,11 +8,13 @@
   var CFG = window.CC_CONFIG, E = window.ENGINE;
   var params = new URLSearchParams(location.search);
   var TEST = params.get('test') === '1';
-  var QKEY = 'cc_v3_queue';
+  var QKEY = 'cc_v3_queue', PKEY = 'cc_v3_progress', DKEY = 'cc_device';
+  var SEC_PER_ITEM = 6; // تقدير تقريبي لعرض الوقت المتبقي فقط
 
   var S = {
     bank: null, user: {}, form: null, si: 0, qi: 0, responses: {},
-    startedAt: null, finishedAt: null, submissionId: null, memQueue: [], fixedSchool: null, fm: {}
+    startedAt: null, finishedAt: null, submissionId: null, memQueue: [], fixedSchool: null, fm: {},
+    times: {}, changes: {}, backs: 0, shownAt: 0, readyAt: 0, resumed: 0
   };
 
   /* ── أدوات ── */
@@ -32,6 +34,24 @@
   /* ── التخزين المحلي (قد يكون غير متاح؛ عندها يبقى الطابور في الذاكرة) ── */
   function loadQueue() { try { return JSON.parse(localStorage.getItem(QKEY) || '[]'); } catch (e) { return S.memQueue.slice(); } }
   function saveQueue(q) { S.memQueue = q.slice(); try { localStorage.setItem(QKEY, JSON.stringify(q)); } catch (e) { } }
+  function deviceId() {
+    try { var d = localStorage.getItem(DKEY); if (!d) { d = uuid(); localStorage.setItem(DKEY, d); } return d; } catch (e) { return ''; }
+  }
+  /* حفظ التقدم بعد كل إجابة، للمتابعة إن أعيد تحميل الصفحة */
+  function saveProgress() {
+    try {
+      localStorage.setItem(PKEY, JSON.stringify({ instrument: S.bank.instrument, form: S.formName, sid: S.submissionId, user: S.user, order: S.form.order,
+        responses: S.responses, times: S.times, changes: S.changes, backs: S.backs, startedAt: S.startedAt.toISOString(), si: S.si, qi: S.qi, savedAt: Date.now() }));
+    } catch (e) { }
+  }
+  function loadProgress() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PKEY) || 'null');
+      if (!p || p.instrument !== S.bank.instrument || p.form !== S.formName || Date.now() - p.savedAt > 24 * 3600 * 1000) return null;
+      return p;
+    } catch (e) { return null; }
+  }
+  function clearProgress() { try { localStorage.removeItem(PKEY); } catch (e) { } }
 
   /* ── التهيئة ── */
   function init() {
@@ -70,15 +90,28 @@
       chipGroup($('f-school'));
     }
 
-    $('btn-start').addEventListener('click', function () { if (S.bank) show('screen-data'); });
+    $('btn-start').addEventListener('click', function () { if (S.bank) { clearProgress(); show('screen-data'); } });
+    $('btn-resume').addEventListener('click', resume);
+    $('btn-done').addEventListener('click', done);
     $('btn-data').addEventListener('click', onData);
     $('btn-back').addEventListener('click', goBack);
     $('btn-next').addEventListener('click', function () { renderQuestion(); show('screen-quiz'); });
     document.addEventListener('keydown', onKey);
 
     fetch('data/items.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (b) {
+      // النموذج المطبق: «full» كل البنود، أو اسم نموذج مختصر معرّف في items.json
+      S.formName = CFG.FORM || 'full';
+      if (S.formName !== 'full' && b.forms && b.forms[S.formName]) {
+        var keep = {}; b.forms[S.formName].forEach(function (id) { keep[id] = true; });
+        b.items = b.items.filter(function (it) { return keep[it.id]; });
+      }
       S.bank = b;
       b.facets.forEach(function (f) { S.fm[f.id] = f; });
+      var p = loadProgress();
+      if (p && Object.keys(p.responses).length) {
+        $('btn-resume').hidden = false;
+        $('btn-resume').textContent = 'متابعة ' + (p.user.name.split(/\s+/)[0] || '') + ' من حيث توقفت';
+      }
     }).catch(function () { $('btn-start').disabled = true; $('btn-start').textContent = 'تعذر تحميل العبارات، أعد تحميل الصفحة'; });
 
     flushQueue();
@@ -140,7 +173,7 @@
     S.user = u;
     S.submissionId = uuid();
     S.form = E.buildForm(S.bank, { stage: u.stage });
-    S.responses = {};
+    S.responses = {}; S.times = {}; S.changes = {}; S.backs = 0;
     S.si = 0; S.qi = 0;
     S.startedAt = new Date();
     $('journey').hidden = false;
@@ -150,6 +183,27 @@
     $('b-title').textContent = S.form.stations[0].station.title;
     $('b-intro').textContent = intro(S.form.stations[0].station);
     show('screen-break');
+  }
+
+  function resume() {
+    var p = loadProgress(); if (!p) { $('btn-resume').hidden = true; return; }
+    S.user = p.user; S.submissionId = p.sid; S.form = E.formFromOrder(S.bank, p.order);
+    S.responses = p.responses; S.times = p.times || {}; S.changes = p.changes || {}; S.backs = p.backs || 0;
+    S.startedAt = new Date(p.startedAt); S.si = p.si; S.qi = p.qi; S.resumed = 1;
+    $('journey').hidden = false;
+    drawJourney();
+    renderQuestion();
+    show('screen-quiz');
+  }
+
+  /* إنهاء: يعيد الصفحة إلى البداية بعد اكتمال الحفظ، حتى لا تبقى النتيجة ظاهرة على جهاز مشترك */
+  function done() {
+    if (CFG.ENDPOINT && loadQueue().length) {
+      flushQueue();
+      $('done-msg').textContent = fem() ? 'انتظري لحظة حتى يكتمل الحفظ، ثم اضغطي «إنهاء».' : 'انتظر لحظة حتى يكتمل الحفظ، ثم اضغط «إنهاء».';
+      return;
+    }
+    location.href = location.pathname + location.search;
   }
 
   /* ── خريطة الرحلة ── */
@@ -173,6 +227,10 @@
     $('q-station').textContent = st.station.title;
     $('q-count').textContent = ar(S.qi + 1) + ' من ' + ar(n);
     $('q-bar').style.width = Math.round(S.qi / n * 100) + '%';
+    var pos = 0; for (var k = 0; k < S.si; k++) pos += S.form.stations[k].items.length; pos += S.qi;
+    var total = S.form.order.length, left = Math.max(1, Math.ceil((total - pos) * SEC_PER_ITEM / 60));
+    $('q-overall').textContent = 'العبارة ' + ar(pos + 1) + ' من ' + ar(total) + ' · بقي نحو ' + (left === 1 ? 'دقيقة' : left === 2 ? 'دقيقتين' : ar(left) + (left <= 10 ? ' دقائق' : ' دقيقة'));
+    $('q-overall-bar').style.width = Math.round(pos / total * 100) + '%';
     var isBarrier = it.scale === 'barrier';
     $('q-meta').hidden = !isBarrier;
     $('q-meta').textContent = isBarrier ? S.bank.barrierStem : '';
@@ -192,21 +250,26 @@
     $('q-options').setAttribute('aria-label', it.text);
     $('btn-back').hidden = S.si === 0 && S.qi === 0;
     var card = $('q-card'); card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter');
+    S.shownAt = now(); S.readyAt = S.shownAt + 350; // يتجاهل اللمسة المزدوجة التي تقع على العبارة التالية
+    try { $('q-text').focus({ preventScroll: true }); } catch (e) { }
   }
+  function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
 
   var locked = false;
   function choose(it, val, btn) {
-    if (locked) return;
+    if (locked || now() < S.readyAt) return;
     locked = true;
+    S.times[it.id] = Math.round(((S.times[it.id] || 0) + (now() - S.shownAt) / 1000) * 10) / 10;
+    if (S.responses[it.id] != null && S.responses[it.id] !== val) S.changes[it.id] = (S.changes[it.id] || 0) + 1;
     Array.prototype.forEach.call($('q-options').querySelectorAll('.opt'), function (b) { b.classList.remove('selected'); b.setAttribute('aria-checked', 'false'); });
     btn.classList.add('selected'); btn.setAttribute('aria-checked', 'true');
     S.responses[it.id] = val;
-    setTimeout(function () { locked = false; advance(); }, CFG.TRANSITION_MS);
+    setTimeout(function () { locked = false; advance(); if (!S.finishedAt) saveProgress(); }, CFG.TRANSITION_MS);
   }
 
   /* الأرقام من لوحة المفاتيح تختار البديل المقابل */
   function onKey(e) {
-    if (!$('screen-quiz').classList.contains('active')) return;
+    if (e.repeat || !$('screen-quiz').classList.contains('active')) return;
     var k = parseInt(e.key, 10);
     var opts = $('q-options').querySelectorAll('.opt');
     if (k >= 1 && k <= opts.length) opts[k - 1].click();
@@ -214,6 +277,8 @@
 
   /* الرجوع يعمل داخل المحطة وبين المحطات */
   function goBack() {
+    if (locked) return;
+    S.backs++;
     if (S.qi > 0) { S.qi--; }
     else if (S.si > 0) { S.si--; S.qi = S.form.stations[S.si].items.length - 1; drawJourney(); }
     renderQuestion();
@@ -244,8 +309,10 @@
     S.finishedAt = new Date();
     var dur = Math.round((S.finishedAt - S.startedAt) / 1000);
     var shown = S.form.order.length;
-    var r = E.score(S.bank, S.responses, { stage: S.user.stage, order: S.form.order, durationSec: dur, itemsShown: shown });
+    var active = Object.keys(S.times).reduce(function (a, k) { return a + S.times[k]; }, 0);
+    var r = E.score(S.bank, S.responses, { stage: S.user.stage, order: S.form.order, durationSec: active || dur, itemsShown: shown });
     var q = loadQueue(); q.push(buildPayload(r, dur, shown)); saveQueue(q);
+    clearProgress();
     drawJourney();
     renderResults(r);
     setStatus('wait');
@@ -254,7 +321,7 @@
 
   function buildPayload(r, dur, shown) {
     var p = {
-      submission_id: S.submissionId, version: CFG.VERSION, instrument: S.bank.instrument, test: TEST ? 1 : 0,
+      submission_id: S.submissionId, version: CFG.VERSION, instrument: S.bank.instrument, form: S.formName, test: TEST ? 1 : 0,
       started_at: S.startedAt.toISOString(), finished_at: S.finishedAt.toISOString(), duration_sec: dur,
       name: S.user.name, gender: S.user.gender, school: S.user.school, school_code: S.user.schoolCode,
       school_from_link: S.user.schoolFromLink ? 1 : 0, stage: S.user.stage, grade: S.user.grade, track: S.user.track,
@@ -266,8 +333,13 @@
       cap_strongest: r.capability.strongest || '', cap_weakest: r.capability.weakest || '',
       attention_pass: r.quality.attentionPass == null ? '' : (r.quality.attentionPass ? 1 : 0),
       attention_failed: r.quality.attentionFailed, longstring: r.quality.longstring, same_share: r.quality.sameShare,
-      straightline: r.quality.straightline ? 1 : 0, fast: r.quality.fast ? 1 : 0
+      straightline: r.quality.straightline ? 1 : 0, fast: r.quality.fast ? 1 : 0,
+      device_id: deviceId(), resumed: S.resumed, backs: S.backs,
+      changes_n: Object.keys(S.changes).reduce(function (a, k) { return a + S.changes[k]; }, 0),
+      active_sec: Math.round(Object.keys(S.times).reduce(function (a, k) { return a + S.times[k]; }, 0)),
+      screen_w: window.innerWidth, ua: navigator.userAgent
     };
+    Object.keys(S.times).forEach(function (k) { p['t_' + k] = S.times[k]; });
     Object.keys(r.facets).forEach(function (k) { p['f_' + k] = r.facets[k].mean; });
     // الإجابات الخام كما اختارها المستجيب (قبل قلب البنود العكسية)
     S.bank.items.forEach(function (it) { if (S.responses[it.id] != null) p['i_' + it.id] = S.responses[it.id]; });
@@ -317,14 +389,12 @@
     // المكوّن الأول
     $('r-cap').innerHTML = r.capability.facets.map(function (id) { return bar(S.fm[id].studentLabel, r.facets[id].mean, 'fill-cap'); }).join('');
     var hl = '';
-    if (r.capability.strongest) {
-      hl = '<div class="hl-row"><span class="hl-tag good">' + g('الأوضح لديك', 'الأوضح لديك') + '</span>' + esc(S.fm[r.capability.strongest].studentLabel) + '</div>' +
-        '<div class="hl-row"><span class="hl-tag grow">' + g('تستطيع البدء به', 'تستطيعين البدء به') + '</span>' + esc(S.fm[r.capability.weakest].studentLabel) + '</div>';
-    }
+    if (r.capability.strongest) hl += '<div class="hl-row"><span class="hl-tag good">الأوضح لديك</span>' + esc(S.fm[r.capability.strongest].studentLabel) + '</div>';
+    if (r.capability.weakest) hl += '<div class="hl-row"><span class="hl-tag grow">' + g('تستطيع البدء به', 'تستطيعين البدء به') + '</span>' + esc(S.fm[r.capability.weakest].studentLabel) + '</div>';
     $('r-hl').innerHTML = hl;
 
     // المكوّن الثاني
-    $('r-cx-note').textContent = 'طول الشريط يعني أثرا أكبر لهذا الجانب في قرارك، ولا يعني أنك ' + g('غير مستعد', 'غير مستعدة') + '.';
+    $('r-cx-note').textContent = 'طول الشريط يعني أثرا أكبر لهذا الجانب في قرارك، ولا يعني ضعفا فيك.';
     $('r-cx').innerHTML = r.complexity.facets.map(function (id) { return bar(S.fm[id].studentLabel, r.facets[id].mean, 'fill-cx'); }).join('');
 
     // العوائق
@@ -338,13 +408,16 @@
 
     // الخطوة التالية: اقتراح عملي للجانب الأقل وضوحا، ثم الحديث مع المرشد أو المرشدة
     var tip = '';
-    if (r.capability.weakest) { var f = S.fm[r.capability.weakest]; tip = fem() ? f.tipF : f.tip; }
+    if (r.capability.weakest) {
+      var f = S.fm[r.capability.weakest], sec = S.user.stage === 'secondary' && f.tipSec;
+      tip = sec ? (fem() ? f.tipSecF : f.tipSec) : (fem() ? f.tipF : f.tip);
+    }
     $('r-next').innerHTML =
       (tip ? '<div class="service"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3 L15 12 L12 21 L9 12 Z" fill="currentColor"/></svg></span><div><b>' + g('ابدأ بخطوة صغيرة', 'ابدئي بخطوة صغيرة') + '</b>' + esc(tip) + '</div></div>' : '') +
       '<p class="muted" style="margin-top:12px">' + g('اعرض', 'اعرضي') + ' هذه الصفحة على ' + counselor() + '، ' + g('واتفق', 'واتفقي') + ' معه' + g('', 'ا') + ' على ما ' + g('تحتاجه', 'تحتاجينه') + ' في الفترة القادمة.</p>';
 
     var sum = [['الاسم', S.user.name], ['المدرسة', S.user.school], ['الصف', S.user.grade + (S.user.track ? ' · ' + S.user.track : '')],
-      ['التاريخ', S.finishedAt.toLocaleDateString('ar-SA')]];
+      ['التاريخ', S.finishedAt.toLocaleDateString('ar-SA-u-ca-gregory')]];
     $('r-summary').innerHTML = sum.map(function (s) { return '<div><dt>' + esc(s[0]) + '</dt><dd>' + esc(s[1]) + '</dd></div>'; }).join('');
     show('screen-results');
   }
