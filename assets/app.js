@@ -75,6 +75,7 @@
     S.fixedSchool = CFG.SCHOOLS.filter(function (s) { return s.code === code; })[0] || null;
 
     chipGroup($('f-gender'));
+    $('f-gender').addEventListener('click', function () { if (!S.fixedSchool) toggleOtherSchool(); });
     var stageOnly = S.fixedSchool ? S.fixedSchool.stage : null;
     makeChips($('f-grade-int'), stageOnly === 'secondary' ? [] : CFG.GRADES.intermediate);
     makeChips($('f-grade-sec'), stageOnly === 'intermediate' ? [] : CFG.GRADES.secondary);
@@ -94,6 +95,7 @@
       $('school-fixed').textContent = 'المدرسة: ' + S.fixedSchool.name;
     } else {
       chipGroup($('f-school'));
+      $('f-school').addEventListener('click', toggleOtherSchool);
     }
 
     $('btn-start').addEventListener('click', function () { if (S.bank) { clearProgress(); show('screen-data'); } });
@@ -149,10 +151,20 @@
     var box = $('f-school');
     var cur = picked(box);
     var list = CFG.SCHOOLS.filter(function (s) { return s.stage === stage; });
-    $('wrap-school').hidden = !list.length;
+    $('wrap-school').hidden = !stage;
     box.innerHTML = list.map(function (s) {
       return '<button type="button" class="chip" role="radio" aria-checked="' + (s.code === cur) + '" data-v="' + esc(s.code) + '">' + esc(s.name) + '</button>';
-    }).join('');
+    }).join('') + '<button type="button" class="chip" role="radio" aria-checked="' + (cur === 'other') + '" data-v="other">أخرى</button>';
+    toggleOtherSchool();
+  }
+  // «أخرى»: حقل نصي لاسم المدرسة
+  function toggleOtherSchool() {
+    var other = picked($('f-school')) === 'other';
+    var inp = $('f-school-other');
+    inp.hidden = !other;
+    var gd = picked($('f-gender'));
+    inp.placeholder = gd === 'F' ? 'اكتبي اسم المدرسة' : gd ? 'اكتب اسم المدرسة' : 'اسم المدرسة';
+    if (other && document.activeElement && document.activeElement.closest && document.activeElement.closest('#f-school')) inp.focus();
   }
 
   /* ── البيانات الأساسية ── */
@@ -160,6 +172,11 @@
     var gr = pickedGrade();
     var code = picked($('f-school'));
     var sch = S.fixedSchool || CFG.SCHOOLS.filter(function (s) { return s.code === code && s.stage === gr.stage; })[0];
+    var otherName = '';
+    if (!S.fixedSchool && code === 'other') {
+      otherName = $('f-school-other').value.replace(/\s+/g, ' ').trim().slice(0, 80);
+      if (otherName) sch = { name: otherName, code: 'other' };
+    }
     var u = {
       code: makeCode(), gender: picked($('f-gender')),
       stage: gr.stage, grade: gr.grade, track: gr.stage === 'secondary' ? picked($('f-track')) : '',
@@ -169,9 +186,9 @@
     if (!u.gender) err = 'اختر: طالبة أو طالب.';
     else if (!u.grade) err = 'اختر الصف.';
     else if (u.stage === 'secondary' && !u.track) err = 'اختر المسار.';
-    else if (!u.school) err = 'اختر المدرسة.';
+    else if (!u.school) err = code === 'other' ? 'اكتب اسم المدرسة.' : 'اختر المدرسة.';
     S.user.gender = u.gender;
-    if (err && fem()) err = err.replace(/^اختر/, 'اختاري');
+    if (err && fem()) err = err.replace(/^اختر/, 'اختاري').replace(/^اكتب/, 'اكتبي');
     $('form-error').textContent = err;
     if (err) return;
 
