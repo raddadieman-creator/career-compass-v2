@@ -183,10 +183,10 @@
       school: sch ? sch.name : '', schoolCode: sch ? sch.code : '', schoolFromLink: !!S.fixedSchool
     };
     var err = '';
-    if (!u.gender) err = 'اختر: طالبة أو طالب.';
-    else if (!u.grade) err = 'اختر الصف.';
-    else if (u.stage === 'secondary' && !u.track) err = 'اختر المسار.';
-    else if (!u.school) err = code === 'other' ? 'اكتب اسم المدرسة.' : 'اختر المدرسة.';
+    if (!u.gender) err = 'يرجى الاختيار: طالب أو طالبة.';
+    else if (!u.grade) err = 'يرجى اختيار الصف.';
+    else if (u.stage === 'secondary' && !u.track) err = 'يرجى اختيار المسار.';
+    else if (!u.school) err = code === 'other' ? 'يرجى كتابة اسم المدرسة.' : 'يرجى اختيار المدرسة.';
     S.user.gender = u.gender;
     if (err && fem()) err = err.replace(/^اختر/, 'اختاري').replace(/^اكتب/, 'اكتبي');
     $('form-error').textContent = err;
@@ -371,7 +371,7 @@
   function setStatus(kind) {
     var el = $('save-status');
     if (!CFG.ENDPOINT) { el.innerHTML = '<span class="status wait">وضع المعاينة: الحفظ غير مربوط</span>'; return; }
-    var m = { ok: ['ok', 'تم حفظ إجاباتك'], wait: ['wait', 'جار حفظ إجاباتك…'], err: ['err', 'لم يكتمل الحفظ بعد، وسيعاد تلقائيا. أبق الصفحة مفتوحة من فضلك.'] }[kind];
+    var m = { ok: ['ok', 'تم حفظ إجاباتك'], wait: ['wait', 'جار حفظ إجاباتك…'], err: ['err', 'لم يكتمل الحفظ بعد، وستعاد المحاولة تلقائيا. يرجى إبقاء الصفحة مفتوحة.'] }[kind];
     if (kind === 'err' && fem()) m[1] = m[1].replace('أبق', 'أبقي');
     el.innerHTML = '<span class="status ' + m[0] + '">' + m[1] + '</span>';
   }
@@ -404,28 +404,28 @@
   }
 
   function renderResults(r) {
-    $('r-hello').textContent = 'أحسنت';
-    $('r-lead').textContent = 'هذه صورة لوضعك اليوم، وتتغير كلما ' + g('عرفت', 'عرفت') + ' أكثر. ' + g('اعرضها على ', 'اعرضيها على ') + counselor() + g(' ليساعدك', ' لتساعدك') + ' في خطوتك التالية.';
+    $('r-hello').textContent = 'شكرا لك';
+    $('r-lead').textContent = 'تصف هذه النتيجة وضعك الآن، وقد تتغير كلما عرفت أكثر عن نفسك وعن خياراتك.';
 
     // المكوّن الأول
     $('r-cap').innerHTML = r.capability.facets.map(function (id) { return bar(S.fm[id].studentLabel, r.facets[id].mean, 'fill-cap'); }).join('');
     var hl = '';
     if (r.capability.strongest) hl += '<div class="hl-row"><span class="hl-tag good">الأوضح لديك</span>' + esc(S.fm[r.capability.strongest].studentLabel) + '</div>';
-    if (r.capability.weakest) hl += '<div class="hl-row"><span class="hl-tag grow">' + g('تستطيع البدء به', 'تستطيعين البدء به') + '</span>' + esc(S.fm[r.capability.weakest].studentLabel) + '</div>';
+    if (r.capability.weakest) hl += '<div class="hl-row"><span class="hl-tag grow">' + 'يمكنك البدء به' + '</span>' + esc(S.fm[r.capability.weakest].studentLabel) + '</div>';
     $('r-hl').innerHTML = hl;
 
     // المكوّن الثاني
-    $('r-cx-note').textContent = 'طول الشريط يعني أثرا أكبر لهذا الجانب في قرارك، ولا يعني ضعفا فيك.';
+    $('r-cx-note').textContent = 'الشريط الأطول يعني أن لهذا الجانب أثرا أكبر في قرارك، وهذا لا يعني ضعفا فيك.';
     $('r-cx').innerHTML = r.complexity.facets.map(function (id) { return bar(S.fm[id].studentLabel, r.facets[id].mean, 'fill-cx'); }).join('');
 
     // العوائق
     var itemById = {}; S.bank.items.forEach(function (it) { itemById[it.id] = it; });
     var named = r.barriers.rated.filter(function (b) { return b.value >= 3; });
     $('r-barriers').innerHTML = named.length ?
-      '<p class="muted">' + 'ذكرت' + ' أن هذه الأمور تقف أمام اختيارك بدرجة متوسطة أو كبيرة:</p><ul class="blist">' +
+      '<p class="muted">هذه الأمور تمثل لك عائقا متوسطا أو كبيرا:</p><ul class="blist">' +
       named.map(function (b) { return '<li><span>' + esc(itemById[b.id].text.replace(/\.$/, '')) + '</span><em>' + esc(S.bank.scales.barrier[b.value - 1]) + '</em></li>'; }).join('') + '</ul>' +
-      '<p class="muted">' + g('تحدث', 'تحدثي') + ' عنها مع ' + counselor() + '؛ فبعضها له حلول لا تظهر في البداية.</p>'
-      : '<p class="muted">لم ' + g('تذكر', 'تذكري') + ' أمورا تقف أمام اختيارك بدرجة متوسطة أو كبيرة.</p>';
+      '<p class="muted">' + g('ناقشها', 'ناقشيها') + ' مع ' + counselor() + '، فقد تكون لبعضها حلول لم تخطر لك.</p>'
+      : '<p class="muted">لم ' + g('تذكر', 'تذكري') + ' أمورا تمثل لك عائقا متوسطا أو كبيرا.</p>';
 
     // الخطوة التالية: اقتراح عملي للجانب الأقل وضوحا، ثم الحديث مع المرشد أو المرشدة
     var tip = '';
@@ -435,11 +435,11 @@
     }
     $('r-next').innerHTML =
       (tip ? '<div class="service"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3 L15 12 L12 21 L9 12 Z" fill="currentColor"/></svg></span><div><b>' + g('ابدأ بخطوة صغيرة', 'ابدئي بخطوة صغيرة') + '</b>' + esc(tip) + '</div></div>' : '') +
-      '<p class="muted" style="margin-top:12px">' + g('اعرض', 'اعرضي') + ' هذه الصفحة على ' + counselor() + '، ' + g('واتفق', 'واتفقي') + ' معه' + g('', 'ا') + ' على ما ' + g('تحتاجه', 'تحتاجينه') + ' في الفترة القادمة.</p>';
+      '<p class="muted" style="margin-top:12px">' + g('اعرض', 'اعرضي') + ' هذه الصفحة على ' + counselor() + ' لتتفقا معا على خطوتك القادمة.</p>';
 
     var sum = [['رمزك', S.user.code], ['المدرسة', S.user.school], ['الصف', S.user.grade + (S.user.track ? ' · ' + S.user.track : '')],
       ['التاريخ', S.finishedAt.toLocaleDateString('ar-SA-u-ca-gregory')]];
-    $('r-code-note').textContent = g('احتفظ بهذا الرمز إن أردت أن تراجع نتيجتك مع ', 'احتفظي بهذا الرمز إن أردت أن تراجعي نتيجتك مع ') + counselor() + '.';
+    $('r-code-note').textContent = g('احتفظ بهذا الرمز، فستحتاجه إذا أردت مراجعة نتيجتك مع ', 'احتفظي بهذا الرمز، فستحتاجينه إذا أردت مراجعة نتيجتك مع ') + counselor() + '.';
     $('r-summary').innerHTML = sum.map(function (s) { return '<div><dt>' + esc(s[0]) + '</dt><dd>' + esc(s[1]) + '</dd></div>'; }).join('');
     show('screen-results');
   }
