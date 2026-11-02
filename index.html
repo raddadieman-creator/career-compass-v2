@@ -47,7 +47,7 @@
           <p class="brand-sub">الجاهزية لاتخاذ القرار المهني</p>
         </div>
       </div>
-      <p class="eyebrow">١٠ دقائق تقريبا</p>
+      <p class="eyebrow">٥ دقائق تقريبا</p>
       <h1>قرارك المهني يبدأ من هنا</h1>
       <p class="lead">في هذه الرحلة القصيرة نتأمل معا معرفتك بنفسك وبالخيارات من حولك، وطريقتك في اتخاذ القرار، وما يؤثر فيه. وفي ختامها تتضح لك صورة جاهزيتك لاتخاذ قرار مهني سليم.</p>
       <ol class="path">
@@ -60,7 +60,7 @@
       <p class="note">لا توجد إجابة صحيحة وأخرى خاطئة. الإجابة الصحيحة هي التي تشبهك.</p>
       <button class="btn primary big" id="btn-start" type="button">يلا نبدأ</button>
       <button class="btn ghost big" id="btn-resume" type="button" hidden>متابعة من حيث توقفت</button>
-      <p class="assent">الضغط على «يلا نبدأ» يعني الموافقة على المشاركة. الإجابات تستخدم للإرشاد ولأغراض البحث، ولا ينشر الاسم.</p>
+      <p class="assent">المشاركة اختيارية، ويمكنك التوقف متى شئت. الضغط على «يلا نبدأ» يعني الموافقة على المشاركة. لا نطلب اسمك، والإجابات تستخدم لأغراض البحث والإرشاد.</p>
     </div>
   </section>
 
@@ -68,12 +68,8 @@
   <section class="screen" id="screen-data">
     <div class="card">
       <p class="eyebrow">قبل أن نبدأ</p>
-      <h2>عرفنا بنفسك</h2>
-      <div class="field">
-        <label for="f-name">الاسم</label>
-        <input type="text" id="f-name" autocomplete="off" placeholder="الاسم الأول واسم العائلة">
-      </div>
-      <div class="field">
+      <h2>بياناتك</h2>
+            <div class="field">
         <span class="label">أنا</span>
         <div class="chips" id="f-gender" role="radiogroup">
           <button type="button" class="chip" data-v="F" role="radio" aria-checked="false">طالبة</button>
@@ -165,6 +161,7 @@
     <div class="card">
       <h3>ملخص</h3>
       <dl class="summary" id="r-summary"></dl>
+      <p class="muted" id="r-code-note"></p>
       <div class="end-actions"><button class="btn ghost print-btn" type="button" onclick="window.print()">طباعة النتيجة</button><button class="btn primary" id="btn-done" type="button">إنهاء</button></div>
       <p class="muted" id="done-msg"></p>
     </div>

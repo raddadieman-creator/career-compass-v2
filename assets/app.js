@@ -21,6 +21,12 @@
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function uuid() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+  /* رمز قصير يظهر للطالب أو الطالبة في النتيجة؛ يقدمه للمرشد إن أراد مراجعة نتيجته. لا يُطلب الاسم. */
+  function makeCode() {
+    var A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', c = '';
+    for (var i = 0; i < 6; i++) c += A.charAt(Math.floor(Math.random() * A.length));
+    return c;
+  }
   function fem() { return S.user.gender === 'F'; }
   function g(m, f) { return fem() ? f : m; }
   function ar(n) { return String(n).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; }); }
@@ -110,7 +116,7 @@
       var p = loadProgress();
       if (p && Object.keys(p.responses).length) {
         $('btn-resume').hidden = false;
-        $('btn-resume').textContent = 'متابعة ' + (p.user.name.split(/\s+/)[0] || '') + ' من حيث توقفت';
+        $('btn-resume').textContent = 'متابعة من حيث توقفت';
       }
     }).catch(function () { $('btn-start').disabled = true; $('btn-start').textContent = 'تعذر تحميل العبارات، أعد تحميل الصفحة'; });
 
@@ -155,18 +161,17 @@
     var code = picked($('f-school'));
     var sch = S.fixedSchool || CFG.SCHOOLS.filter(function (s) { return s.code === code && s.stage === gr.stage; })[0];
     var u = {
-      name: $('f-name').value.trim(), gender: picked($('f-gender')),
+      code: makeCode(), gender: picked($('f-gender')),
       stage: gr.stage, grade: gr.grade, track: gr.stage === 'secondary' ? picked($('f-track')) : '',
       school: sch ? sch.name : '', schoolCode: sch ? sch.code : '', schoolFromLink: !!S.fixedSchool
     };
     var err = '';
-    if (!u.name) err = 'اكتب الاسم من فضلك.';
-    else if (!u.gender) err = 'اختر: طالبة أو طالب.';
+    if (!u.gender) err = 'اختر: طالبة أو طالب.';
     else if (!u.grade) err = 'اختر الصف.';
     else if (u.stage === 'secondary' && !u.track) err = 'اختر المسار.';
     else if (!u.school) err = 'اختر المدرسة.';
     S.user.gender = u.gender;
-    if (err && fem()) err = err.replace('اكتب', 'اكتبي').replace(/^اختر/, 'اختاري');
+    if (err && fem()) err = err.replace(/^اختر/, 'اختاري');
     $('form-error').textContent = err;
     if (err) return;
 
@@ -323,7 +328,7 @@
     var p = {
       submission_id: S.submissionId, version: CFG.VERSION, instrument: S.bank.instrument, form: S.formName, test: TEST ? 1 : 0,
       started_at: S.startedAt.toISOString(), finished_at: S.finishedAt.toISOString(), duration_sec: dur,
-      name: S.user.name, gender: S.user.gender, school: S.user.school, school_code: S.user.schoolCode,
+      code: S.user.code, gender: S.user.gender, school: S.user.school, school_code: S.user.schoolCode,
       school_from_link: S.user.schoolFromLink ? 1 : 0, stage: S.user.stage, grade: S.user.grade, track: S.user.track,
       consent: 1, consent_mode: 'assent_on_start',
       items_shown: shown, order: S.form.order.join(' '),
@@ -382,8 +387,7 @@
   }
 
   function renderResults(r) {
-    var first = S.user.name.split(/\s+/)[0];
-    $('r-hello').textContent = 'أحسنت يا ' + first;
+    $('r-hello').textContent = 'أحسنت';
     $('r-lead').textContent = 'هذه صورة لوضعك اليوم، وتتغير كلما ' + g('عرفت', 'عرفت') + ' أكثر. ' + g('اعرضها على ', 'اعرضيها على ') + counselor() + g(' ليساعدك', ' لتساعدك') + ' في خطوتك التالية.';
 
     // المكوّن الأول
@@ -416,8 +420,9 @@
       (tip ? '<div class="service"><span class="ico"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3 L15 12 L12 21 L9 12 Z" fill="currentColor"/></svg></span><div><b>' + g('ابدأ بخطوة صغيرة', 'ابدئي بخطوة صغيرة') + '</b>' + esc(tip) + '</div></div>' : '') +
       '<p class="muted" style="margin-top:12px">' + g('اعرض', 'اعرضي') + ' هذه الصفحة على ' + counselor() + '، ' + g('واتفق', 'واتفقي') + ' معه' + g('', 'ا') + ' على ما ' + g('تحتاجه', 'تحتاجينه') + ' في الفترة القادمة.</p>';
 
-    var sum = [['الاسم', S.user.name], ['المدرسة', S.user.school], ['الصف', S.user.grade + (S.user.track ? ' · ' + S.user.track : '')],
+    var sum = [['رمزك', S.user.code], ['المدرسة', S.user.school], ['الصف', S.user.grade + (S.user.track ? ' · ' + S.user.track : '')],
       ['التاريخ', S.finishedAt.toLocaleDateString('ar-SA-u-ca-gregory')]];
+    $('r-code-note').textContent = g('احتفظ بهذا الرمز إن أردت أن تراجع نتيجتك مع ', 'احتفظي بهذا الرمز إن أردت أن تراجعي نتيجتك مع ') + counselor() + '.';
     $('r-summary').innerHTML = sum.map(function (s) { return '<div><dt>' + esc(s[0]) + '</dt><dd>' + esc(s[1]) + '</dd></div>'; }).join('');
     show('screen-results');
   }

@@ -68,7 +68,7 @@ td.n{font-variant-numeric:tabular-nums;text-align:center}
   <label>النموذج<select id="f-form"></select></label>
   <label>من تاريخ<input type="date" id="f-from"></label>
   <label>إلى تاريخ<input type="date" id="f-to"></label>
-  <label>بحث بالاسم<input type="text" id="f-q"></label>
+  <label>بحث بالرمز<input type="text" id="f-q"></label>
   <label class="chk"><input type="checkbox" id="f-latest" checked>آخر محاولة فقط</label>
   <label class="chk"><input type="checkbox" id="f-notest" checked>استبعاد التجريبي</label>
   <label class="chk"><input type="checkbox" id="f-quality">استبعاد ما يحتاج مراجعة</label>
@@ -100,7 +100,7 @@ td.n{font-variant-numeric:tabular-nums;text-align:center}
   <div class="panel">
     <h2 id="t-title">الطلبة</h2>
     <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
-    <p class="note">اضغطي على أي صف لعرض تقرير الطالبة وطباعته. «آخر محاولة» تُحدد بالاسم والمدرسة والصف والجهاز معا. «يحتاج مراجعة» يعني: خطأ في عبارة التركيز، أو 90% فأكثر من الإجابات بالقيمة نفسها، أو أقل من ثانيتين للعبارة في المتوسط.</p>
+    <p class="note">الأداة لا تطلب الاسم؛ لكل مستجيب رمز يظهر له في نتيجته. اضغطي على أي صف لعرض التقرير وطباعته. «يحتاج مراجعة» يعني: خطأ في عبارة التركيز، أو 90% فأكثر من الإجابات بالقيمة نفسها، أو أقل من ثانيتين للعبارة في المتوسط.</p>
   </div>
 </div>
 
@@ -155,14 +155,15 @@ function load() {
     // فطالبتان بالاسم نفسه على جهازين مختلفين لا تختفي إحداهما.
     var last = {}, devs = {};
     RAW.forEach(function (r) {
-      r._g = r.student_key + '|' + (r.device_id || r.submission_id) + '|' + (String(r.test) === '1' ? 't' : '');
+      // دون اسم: كل إرسال سجل مستقل
+      r._g = r.name ? r.student_key + '|' + (r.device_id || r.submission_id) + '|' + (String(r.test) === '1' ? 't' : '') : r.submission_id;
       var t = String(r.finished_at || r.received_at);
       if (!last[r._g] || t > last[r._g]) last[r._g] = t;
-      if (String(r.test) !== '1') { devs[r.student_key] = devs[r.student_key] || {}; devs[r.student_key][r.device_id || r.submission_id] = true; }
+      if (r.name && String(r.test) !== '1') { devs[r.student_key] = devs[r.student_key] || {}; devs[r.student_key][r.device_id || r.submission_id] = true; }
     });
     RAW.forEach(function (r) {
       r._latest = String(r.finished_at || r.received_at) === last[r._g];
-      r._dup = String(r.test) !== '1' && Object.keys(devs[r.student_key] || {}).length > 1;
+      r._dup = !!r.name && String(r.test) !== '1' && Object.keys(devs[r.student_key] || {}).length > 1;
     });
     fillFilters();
     apply();
@@ -203,7 +204,7 @@ function apply() {
     var d = String(r.received_at || '').slice(0, 10);
     if (f.from && d < f.from) return false;
     if (f.to && d > f.to) return false;
-    if (f.q && String(r.name).indexOf(f.q) === -1) return false;
+    if (f.q && String(r.code || r.name || '').toUpperCase().indexOf(f.q.toUpperCase()) === -1) return false;
     return true;
   });
   kpis(); charts(); table(); itemAnalysis();
@@ -253,9 +254,9 @@ function charts() {
   chart('c-school', 'bar', schools, [{ label: 'عدد', data: schools.map(function (s) { return ROWS.filter(function (r) { return r.school === s; }).length; }), backgroundColor: '#1d2433' }]);
 }
 
-var COLS = [['name', 'الاسم'], ['school', 'المدرسة'], ['grade', 'الصف']]
+var COLS = [['code', 'الرمز'], ['school', 'المدرسة'], ['grade', 'الصف']]
   .concat(CAP.map(function (f) { return ['f_' + f.id, f.id]; })).concat(CX.map(function (f) { return ['f_' + f.id, f.id]; }))
-  .concat([['_bar', 'العوائق'], ['_sig', 'إشارات'], ['_q', 'الجودة'], ['attempt', 'المحاولة'], ['received_at', 'التاريخ']]);
+  .concat([['_bar', 'العوائق'], ['_sig', 'إشارات'], ['_q', 'الجودة'], ['received_at', 'التاريخ']]);
 function cell(r, k) {
   if (k.indexOf('f_') === 0) { var v = num(r[k]); var hot = CX.some(function (f) { return 'f_' + f.id === k; }) && v >= SIG; return '<span class="' + (hot ? 'sig' : '') + '">' + f2(v) + '</span>'; }
   if (k === '_bar') return esc((r.barrier_count === '' ? '—' : r.barrier_count) + ' من ' + r.barrier_total);
@@ -286,7 +287,7 @@ function detail(id) {
     var v = num(r['i_' + i.id]); return '<span>' + esc(i.text.replace(/\.$/, '')) + ': ' + esc(v ? agree[v - 1] : '—') + '</span>'; }).join('');
   var sg = signals(r);
   $('d-box').innerHTML =
-    '<h1>' + esc(r.name) + '</h1><div class="sub">' + esc(r.school) + ' · ' + esc(r.grade) + (r.track ? ' · ' + esc(r.track) : '') + ' · ' + esc(String(r.received_at).slice(0, 10)) + ' · المحاولة ' + esc(r.attempt) + '</div>' +
+    '<h1>الرمز ' + esc(r.code || r.name) + '</h1><div class="sub">' + esc(r.school) + ' · ' + esc(r.grade) + (r.track ? ' · ' + esc(r.track) : '') + ' · ' + esc(String(r.received_at).slice(0, 10)) + '</div>' +
     '<h2>القدرة المدركة على اتخاذ القرار (1–5)</h2>' + CAP.map(function (f) { return bar(f.label, num(r['f_' + f.id]), '#0d8487'); }).join('') +
     '<h2>ملف تعقيد سياق القرار (1–5)</h2>' + CX.map(function (f) { return bar(f.label, num(r['f_' + f.id]), num(r['f_' + f.id]) >= SIG ? '#e8603f' : '#f2a98f'); }).join('') +
     '<h2>العوائق (' + esc(r.barrier_count) + ' من ' + esc(r.barrier_total) + ' قائمة)</h2><div class="chipline">' + bl + '</div>' +
