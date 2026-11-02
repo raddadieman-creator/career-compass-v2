@@ -3,21 +3,21 @@
    الفكرة: رحلة على خريطة، سؤال واحد في كل شاشة، أزرار كبيرة سهلة اللمس.
    ===================================================================== */
 :root {
-  --bg: #eef4f5;
+  --bg: #eef2f5;
   --surface: #ffffff;
-  --surface-2: #e4eef0;
+  --surface-2: #e6ecf1;
   --ink: #13233a;
   --muted: #5a6b7e;
-  --line: #d3e0e3;
+  --line: #d5dde5;
   --primary: #0d8487;
   --primary-ink: #ffffff;
-  --primary-soft: #d3eeee;
-  --accent: #f26b4a;
-  --accent-soft: #fde2d9;
-  --accent-ink: #b03d1f;
+  --primary-soft: #d6ecec;
+  --accent: #24476b;
+  --accent-soft: #dfe7f0;
+  --accent-ink: #1d3a58;
   --opt-line: #8fa4ae;
-  --sun: #e9a527;
-  --sun-soft: #fbefd3;
+  --sun: #6b8299;
+  --sun-soft: #e6ebf0;
   --good: #1c9a5e;
   --warn: #c98208;
   --bad: #d4455c;
@@ -29,15 +29,15 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0e1824; --surface: #152332; --surface-2: #1b2d40; --ink: #e9f1f4; --muted: #9db0c3; --line: #263a4f;
-    --primary: #2fb7b3; --primary-ink: #0a141d; --primary-soft: #16393f; --accent: #ff8a6c; --accent-soft: #3b2620; --accent-ink: #ff9d82; --opt-line: #4f6a80;
-    --sun: #f2bf55; --sun-soft: #3a311d; --good: #3cc27f; --warn: #e6a53a; --bad: #f0687c;
+    --primary: #2fb7b3; --primary-ink: #0a141d; --primary-soft: #16393f; --accent: #7fa6d1; --accent-soft: #1c2d42; --accent-ink: #9dbbe0; --opt-line: #4f6a80;
+    --sun: #8fa3b8; --sun-soft: #1f2b38; --good: #3cc27f; --warn: #e6a53a; --bad: #f0687c;
     --shadow: 0 12px 32px rgba(0, 0, 0, .25); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e1824; --surface: #152332; --surface-2: #1b2d40; --ink: #e9f1f4; --muted: #9db0c3; --line: #263a4f;
-  --primary: #2fb7b3; --primary-ink: #0a141d; --primary-soft: #16393f; --accent: #ff8a6c; --accent-soft: #3b2620; --accent-ink: #ff9d82; --opt-line: #4f6a80;
-  --sun: #f2bf55; --sun-soft: #3a311d; --good: #3cc27f; --warn: #e6a53a; --bad: #f0687c;
+  --primary: #2fb7b3; --primary-ink: #0a141d; --primary-soft: #16393f; --accent: #7fa6d1; --accent-soft: #1c2d42; --accent-ink: #9dbbe0; --opt-line: #4f6a80;
+  --sun: #8fa3b8; --sun-soft: #1f2b38; --good: #3cc27f; --warn: #e6a53a; --bad: #f0687c;
   --shadow: 0 12px 32px rgba(0, 0, 0, .25); color-scheme: dark;
 }
 
@@ -83,7 +83,7 @@ p { margin: 0; }
 .path b { display: block; font-size: 16px; }
 .path small { color: var(--muted); font-size: 14px; }
 .stop { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 18px; flex-shrink: 0; transform: rotate(-4deg); }
-.stop.s1 { background: var(--sun-soft); color: var(--warn); }
+.stop.s1 { background: var(--sun-soft); color: var(--ink); }
 .stop.s2 { background: var(--primary-soft); color: var(--primary); }
 .stop.s3 { background: var(--accent-soft); color: var(--accent); }
 .stop.s4 { background: var(--ink); color: var(--bg); transform: rotate(4deg); }
@@ -114,7 +114,7 @@ input[type=text]:focus, select:focus { border-color: var(--primary); }
 .station-tag { font-family: var(--display); font-weight: 700; font-size: 17px; }
 .q-count { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .station-bar { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-bottom: 14px; }
-.station-bar div { height: 100%; width: 0; background: linear-gradient(90deg, var(--primary), var(--sun)); border-radius: 99px; transition: width .35s ease; }
+.station-bar div { height: 100%; width: 0; background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 55%, var(--accent))); border-radius: 99px; transition: width .35s ease; }
 .qcard { padding: 24px 20px 18px; min-height: 340px; }
 .qcard.enter { animation: slide .25s ease both; }
 @keyframes slide { from { transform: translateX(-14px); opacity: .5; } to { transform: none; opacity: 1; } }
@@ -198,14 +198,14 @@ input[type=text]:focus, select:focus { border-color: var(--primary); }
 /* ── النسخة الثالثة: النتيجة الوصفية ── */
 .stop.s5 { background: var(--surface-2); color: var(--ink); }
 .q-meta { display: block; font-size: 14px; font-weight: 600; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; }
-.bar .b .fill-cap { background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--sun))); }
-.bar .b .fill-cx { background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--sun))); }
+.bar .b .fill-cap { background: var(--primary); }
+.bar .b .fill-cx { background: var(--accent); }
 .hl { display: grid; gap: 8px; margin-top: 16px; }
 .hl:empty { display: none; }
 .hl-row { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
 .hl-tag { font-size: 12px; font-weight: 700; border-radius: 99px; padding: 3px 10px; flex-shrink: 0; }
 .hl-tag.good { background: var(--primary-soft); color: var(--primary); }
-.hl-tag.grow { background: var(--sun-soft); color: #7a4f05; }
+.hl-tag.grow { background: var(--sun-soft); color: var(--ink); }
 .blist { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 8px; }
 .blist li { display: flex; justify-content: space-between; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 15px; font-weight: 600; }
 .blist em { font-style: normal; font-size: 13px; color: var(--accent-ink); white-space: nowrap; }
