@@ -103,12 +103,18 @@ function studentKey_(d) {
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('لوحة المقياس')
     .addItem('فتح لوحة التحكم', 'openDashboard')
+    .addItem('لوحة النسخة السابقة', 'openDashboardV2')
     .addToUi();
 }
 
 function openDashboard() {
   var html = HtmlService.createHtmlOutputFromFile('Dashboard').setWidth(1280).setHeight(860);
   SpreadsheetApp.getUi().showModelessDialog(html, 'لوحة مقياس جاهزية القرار المهني');
+}
+
+function openDashboardV2() {
+  var html = HtmlService.createHtmlOutputFromFile('DashboardV2').setWidth(1280).setHeight(860);
+  SpreadsheetApp.getUi().showModelessDialog(html, 'لوحة النسخة السابقة');
 }
 
 function getData() {
