@@ -46,7 +46,15 @@ function doPost(e) {
   }
 }
 
+/* رابط اللوحة: نشر مستقل (الوصول: أنا فقط). لا تظهر اللوحة إلا لصاحبة الملف بعد دخولها بحسابها */
 function doGet() {
+  var owner = Session.getEffectiveUser().getEmail();
+  var who = Session.getActiveUser().getEmail();
+  if (who && owner && who === owner) {
+    return HtmlService.createHtmlOutputFromFile('Dashboard')
+      .setTitle('لوحة مقياس الجاهزية المهنية')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
   return json_({ ok: true, service: 'career-compass-v2' });
 }
 
