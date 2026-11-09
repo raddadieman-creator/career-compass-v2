@@ -5,71 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="البوصلة المهنية: أداة تقدير الجاهزية لاتخاذ القرار المهني لطلبة المرحلتين المتوسطة والثانوية">
 <title>البوصلة المهنية</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Ccircle cx=%2720%27 cy=%2720%27 r=%2718%27 fill=%27%23fff%27 stroke=%27%2313233a%27 stroke-width=%273%27/%3E%3Cpath d=%27M20 5 L25 20 L15 20 Z%27 fill=%27%23f26b4a%27/%3E%3Cpath d=%27M20 35 L25 20 L15 20 Z%27 fill=%27%230d8487%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Ccircle cx=%2720%27 cy=%2720%27 r=%2718%27 fill=%27%23fff%27 stroke=%27%2313233a%27 stroke-width=%273%27/%3E%3Cpath d=%27M20 5 L25 20 L15 20 Z%27 fill=%27%23ee7b1b%27/%3E%3Cpath d=%27M20 35 L25 20 L15 20 Z%27 fill=%27%2324476b%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
 <div id="test-banner" class="test-banner" hidden>وضع التجربة: هذه الإجابات تجريبية ولا تدخل في التحليل</div>
 
 <header class="topbar">
-  <div class="brand">
-    <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M20 7 L24 20 L20 33 L16 20 Z" fill="var(--accent)"/><path d="M20 20 L24 20 L20 33 Z" fill="var(--primary)"/><circle cx="20" cy="20" r="2.2" fill="var(--surface)"/></svg>
-    <span><b class="brand-name">البوصلة المهنية</b> · الجاهزية لاتخاذ القرار المهني</span>
+  <div class="topbar-in">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17.5" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M20 6 L24.5 20 L15.5 20 Z" fill="var(--ember)"/><path d="M20 34 L24.5 20 L15.5 20 Z" fill="currentColor"/></svg>
+      <span class="brand-name">البوصلة المهنية</span>
+    </div>
+    <div class="journey" id="journey" hidden></div>
   </div>
-  <div class="journey" id="journey" hidden></div>
 </header>
 
 <main class="wrap">
 
   <!-- الترحيب -->
-  <section class="screen active" id="screen-welcome">
-    <div class="hero">
-      <div class="brand-hero">
-        <svg class="compass" id="compass" viewBox="0 0 200 200" role="img" aria-label="البوصلة المهنية">
-          <circle class="c-face" cx="100" cy="100" r="92"/>
-          <circle class="c-ring" cx="100" cy="100" r="80"/>
-          <g class="c-ticks" id="c-ticks"></g>
-          <text class="c-dir" x="100" y="52">ش</text>
-          <text class="c-dir" x="155" y="107">ق</text>
-          <text class="c-dir" x="100" y="162">ج</text>
-          <text class="c-dir" x="45" y="107">غ</text>
-          <g class="c-needle">
-            <path d="M100 60 L110 100 L90 100 Z" class="n-north"/>
-            <path d="M100 140 L110 100 L90 100 Z" class="n-south"/>
-            <circle cx="100" cy="100" r="7" class="n-hub"/>
-          </g>
-        </svg>
-        <div>
-          <p class="brand-title">البوصلة المهنية</p>
-          <p class="brand-sub">الجاهزية لاتخاذ القرار المهني</p>
+  <section class="screen active wide" id="screen-welcome">
+    <div class="welcome">
+      <figure class="instrument">
+        <div class="dial dial-hero" id="dial-hero"></div>
+        <figcaption><b>البوصلة المهنية</b><span>أداة تقدير الجاهزية لاتخاذ القرار المهني</span></figcaption>
+      </figure>
+      <div class="w-text">
+        <h1>أين أنا من قراري المهني؟</h1>
+        <p class="lead">عبارات قصيرة عن معرفتك بنفسك وبالمسارات والمهن، وعن طريقتك في اتخاذ القرار وما يؤثر فيه. وفي النهاية تظهر لك نتيجة توضح ما لديك الآن، ومن أين يمكنك أن تبدأ.</p>
+        <ol class="stations">
+          <li><i>١</i><div><b>أعرف نفسي وخياراتي</b><small>ما أعرفه عن نفسي وعن المسارات والمهن</small></div></li>
+          <li><i>٢</i><div><b>كيف أقرر</b><small>كيف أوازن بين الخيارات وأخطط وأحسم</small></div></li>
+          <li><i>٣</i><div><b>من حولي وقراري</b><small>أثر أسرتي والناس من حولي في اختياري</small></div></li>
+          <li><i>٤</i><div><b>ما قد يقف في طريقي</b><small>ظروف قد تحد من اختياري</small></div></li>
+          <li class="last"><i><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2 L13 10 L10 18 L7 10 Z" fill="currentColor"/></svg></i><div><b>نتيجتي</b><small>ما لدي الآن، ومن أين أبدأ</small></div></li>
+        </ol>
+        <p class="note">ليست هناك إجابات صحيحة وأخرى خاطئة؛ المهم أن تعبر الإجابة عن حالك. تحتاج نحو ثماني دقائق.</p>
+        <div class="w-actions">
+          <button class="btn primary big" id="btn-start" type="button">لنبدأ</button>
+          <button class="btn ghost big" id="btn-resume" type="button" hidden>متابعة من حيث توقفت</button>
         </div>
+        <p class="assent">المشاركة اختيارية، ويمكنك التوقف متى شئت. الضغط على «لنبدأ» يعني الموافقة على المشاركة. لا نطلب اسمك، والإجابات تستخدم لأغراض البحث والإرشاد.</p>
       </div>
-      <p class="eyebrow">نحو ٨ دقائق</p>
-      <h1>أين أنا من قراري المهني؟</h1>
-      <p class="lead">عبارات قصيرة عن معرفتك بنفسك وبالمسارات والمهن، وعن طريقتك في اتخاذ القرار وما يؤثر فيه. وفي النهاية تظهر لك نتيجة توضح ما لديك الآن، ومن أين يمكنك أن تبدأ.</p>
-      <ol class="path">
-        <li><span class="stop s1">١</span><div><b>أعرف نفسي وخياراتي</b><small>ما أعرفه عن نفسي وعن المسارات والمهن</small></div></li>
-        <li><span class="stop s2">٢</span><div><b>كيف أقرر</b><small>كيف أوازن بين الخيارات وأخطط وأحسم</small></div></li>
-        <li><span class="stop s3">٣</span><div><b>من حولي وقراري</b><small>أثر أسرتي والناس من حولي في اختياري</small></div></li>
-        <li><span class="stop s5">٤</span><div><b>ما قد يقف في طريقي</b><small>ظروف قد تحد من اختياري</small></div></li>
-        <li><span class="stop s4">★</span><div><b>نتيجتي</b><small>ما لدي الآن، ومن أين أبدأ</small></div></li>
-      </ol>
-      <p class="note">ليست هناك إجابات صحيحة وأخرى خاطئة؛ المهم أن تعبر الإجابة عن حالك.</p>
-      <button class="btn primary big" id="btn-start" type="button">لنبدأ</button>
-      <button class="btn ghost big" id="btn-resume" type="button" hidden>متابعة من حيث توقفت</button>
-      <p class="assent">المشاركة اختيارية، ويمكنك التوقف متى شئت. الضغط على «لنبدأ» يعني الموافقة على المشاركة. لا نطلب اسمك، والإجابات تستخدم لأغراض البحث والإرشاد.</p>
     </div>
   </section>
 
   <!-- البيانات -->
   <section class="screen" id="screen-data">
     <div class="card">
-      <p class="eyebrow">قبل أن نبدأ</p>
       <h2>بياناتك</h2>
-            <div class="field">
+      <p class="muted sub">تساعدنا في قراءة النتائج حسب الصف والمرحلة، ولا نطلب اسمك.</p>
+      <div class="field">
         <span class="label">أنا</span>
         <div class="chips" id="f-gender" role="radiogroup">
           <button type="button" class="chip" data-v="F" role="radio" aria-checked="false">طالبة</button>
@@ -90,7 +79,7 @@
       <div class="field" id="wrap-school" hidden>
         <span class="label">مدرستي</span>
         <div class="chips" id="f-school" role="radiogroup"></div>
-        <input type="text" id="f-school-other" maxlength="80" autocomplete="off" placeholder="اسم المدرسة" aria-label="اسم المدرسة" hidden style="margin-top:10px">
+        <input type="text" id="f-school-other" class="other-input" maxlength="80" autocomplete="off" placeholder="اسم المدرسة" aria-label="اسم المدرسة" hidden>
       </div>
       <p class="school-fixed" id="school-fixed" hidden></p>
       <p class="form-error" id="form-error" role="alert"></p>
@@ -101,11 +90,11 @@
   <!-- السؤال -->
   <section class="screen" id="screen-quiz">
     <div class="station-head">
-      <span class="station-tag" id="q-station"></span>
+      <h2 class="station-tag" id="q-station"></h2>
       <span class="q-count" id="q-count" aria-live="polite"></span>
     </div>
-    <div class="station-bar"><div id="q-bar"></div></div>
-    <div class="overall"><div class="overall-bar"><div id="q-overall-bar"></div></div><span id="q-overall"></span></div>
+    <div class="station-bar" aria-hidden="true"><div id="q-bar"></div></div>
+    <div class="overall"><div class="overall-bar" aria-hidden="true"><div id="q-overall-bar"></div></div><span id="q-overall"></span></div>
     <div class="card qcard" id="q-card">
       <p class="q-meta" id="q-meta" hidden></p>
       <h2 class="q-text" id="q-text" tabindex="-1"></h2>
@@ -119,8 +108,8 @@
   <!-- بين المحطات -->
   <section class="screen" id="screen-break">
     <div class="card break">
-      <div class="medal" id="b-medal" aria-hidden="true"></div>
-      <p class="eyebrow" id="b-done"></p>
+      <div class="dial dial-break" id="b-medal" aria-hidden="true"></div>
+      <p class="b-done" id="b-done"></p>
       <h2 id="b-title"></h2>
       <p class="lead" id="b-intro"></p>
       <button class="btn primary big" id="btn-next" type="button">متابعة</button>
@@ -130,10 +119,12 @@
   <!-- النتائج -->
   <section class="screen" id="screen-results">
     <div class="results-head">
-      <p class="eyebrow">نتيجتي</p>
-      <h1 id="r-hello"></h1>
-      <p class="lead" id="r-lead"></p>
-      <div id="save-status"></div>
+      <div class="dial dial-result" id="r-dial" aria-hidden="true"></div>
+      <div>
+        <h1 id="r-hello"></h1>
+        <p class="lead" id="r-lead"></p>
+        <div id="save-status"></div>
+      </div>
     </div>
 
     <div class="card" id="card-cap">
@@ -170,7 +161,7 @@
 
 </main>
 
-<footer class="foot">الباحثة: إيمان عبد العزيز الردادي · النسخة <span id="ver" dir="ltr"></span></footer>
+<footer class="foot"><span>الباحثة: إيمان عبد العزيز الردادي</span><span>النسخة <span id="ver" dir="ltr"></span></span></footer>
 
 <script src="assets/config.js"></script>
 <script src="assets/engine.js"></script>

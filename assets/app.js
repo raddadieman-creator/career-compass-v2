@@ -62,14 +62,9 @@
   /* ── التهيئة ── */
   function init() {
     $('ver').textContent = CFG.VERSION;
-    var ticks = '';
-    for (var a = 0; a < 360; a += 10) {
-      if (a % 90 === 0) continue;
-      var r1 = a % 30 === 0 ? 68 : 72, rad = (a - 90) * Math.PI / 180;
-      ticks += '<line class="' + (a % 30 === 0 ? 'major' : '') + '" x1="' + (100 + r1 * Math.cos(rad)).toFixed(1) + '" y1="' + (100 + r1 * Math.sin(rad)).toFixed(1) +
-        '" x2="' + (100 + 79 * Math.cos(rad)).toFixed(1) + '" y2="' + (100 + 79 * Math.sin(rad)).toFixed(1) + '"/>';
-    }
-    if ($('c-ticks')) $('c-ticks').innerHTML = ticks;
+    $('dial-hero').innerHTML = dialSVG('h', true);
+    setDial($('dial-hero'), -130, 0, 0, true);
+    setTimeout(function () { setDial($('dial-hero'), 0, 0, 0); }, 350);
     if (TEST) $('test-banner').hidden = false;
     var code = params.get('school');
     S.fixedSchool = CFG.SCHOOLS.filter(function (s) { return s.code === code; })[0] || null;
@@ -200,8 +195,8 @@
     S.startedAt = new Date();
     $('journey').hidden = false;
     drawJourney();
-    $('b-medal').innerHTML = '<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="none" stroke="var(--primary)" stroke-width="4"/><path d="M26 10 L31 26 L26 42 L21 26 Z" fill="var(--accent)"/></svg>';
-    $('b-done').textContent = 'المحطة الأولى';
+    breakDial(-60, 0);
+    $('b-done').textContent = 'المحطة الأولى من أربع';
     $('b-title').textContent = S.form.stations[0].station.title;
     $('b-intro').textContent = intro(S.form.stations[0].station);
     show('screen-break');
@@ -230,14 +225,69 @@
 
   /* ── خريطة الرحلة ── */
   function drawJourney() {
-    var stops = S.form.stations.map(function (s) { return { id: s.station.id, label: s.station.title }; }).concat([{ id: 'results', label: 'نتيجتي' }]);
-    var curIdx = S.finishedAt ? stops.length - 1 : S.si;
-    $('journey').innerHTML = stops.map(function (s, i) {
-      var cls = i < curIdx ? 'done' : i === curIdx ? 'now' : '';
-      var mark = i < curIdx ? '✓' : (i === stops.length - 1 ? '★' : ar(i + 1));
-      return (i ? '<span class="jline ' + (i <= curIdx ? 'done' : '') + '"></span>' : '') +
-        '<span class="jstop ' + cls + '"><i>' + mark + '</i><span>' + esc(s.label) + '</span></span>';
+    var n = S.form.stations.length, cur = S.finishedAt ? n : S.si;
+    if (!$('jtrack')) $('journey').innerHTML = '<span class="jdial" id="jdial">' + dialSVG('j', false) + '</span><div class="jtrack" id="jtrack"></div>';
+    $('jtrack').innerHTML = S.form.stations.map(function (s, i) {
+      var cls = i < cur ? 'done' : i === cur ? 'now' : '';
+      return '<span class="seg ' + cls + '"><span class="seg-b"><i' + (i < cur ? ' style="width:100%"' : '') + '></i></span><b>' + esc(s.station.title) + '</b></span>';
     }).join('');
+    setDial($('jdial'), Math.min(cur, n - 1) * 90, cur, cur);
+  }
+
+  /* ── البوصلة: القرص وإبرته. المحطات الأربع على الجهات الأربع، والإبرة تشير إلى المحطة الحالية ── */
+  var DIAL_LABELS = ['١ معرفتي', '٢ قراري', '٣ من حولي', '٤ العوائق'];
+  function dialSVG(uid, labels) {
+    var W = labels ? 560 : 300, H = labels ? 440 : 300, cx = W / 2, cy = H / 2, R = labels ? 150 : 138, i, a, rad, o = [];
+    o.push('<svg viewBox="0 0 ' + W + ' ' + H + '" class="dial-svg" role="img" aria-label="البوصلة المهنية">');
+    o.push('<defs><linearGradient id="ng' + uid + '" x1="0" y1="1" x2="0" y2="0"><stop offset="0" style="stop-color:var(--sun)"/><stop offset="1" style="stop-color:var(--ember)"/></linearGradient></defs>');
+    o.push('<circle class="d-face" cx="' + cx + '" cy="' + cy + '" r="' + R + '"/>');
+    o.push('<circle class="d-ring" cx="' + cx + '" cy="' + cy + '" r="' + (R - 30) + '"/>');
+    var rose = [];
+    for (i = 0; i < 16; i++) {
+      a = i * 22.5; rad = (a - 90) * Math.PI / 180;
+      var rr = i % 4 === 0 ? R - 44 : (i % 2 === 0 ? (R - 44) * 0.55 : (R - 44) * 0.16);
+      rose.push((cx + rr * Math.cos(rad)).toFixed(1) + ',' + (cy + rr * Math.sin(rad)).toFixed(1));
+    }
+    o.push('<polygon class="d-rose" points="' + rose.join(' ') + '"/>');
+    for (a = 0; a < 360; a += 5) {
+      if (a % 90 === 0) continue;
+      rad = (a - 90) * Math.PI / 180;
+      var r1 = R - (a % 30 === 0 ? 18 : a % 15 === 0 ? 12 : 8), r2 = R - 4;
+      o.push('<line class="d-tick' + (a % 30 === 0 ? ' major' : '') + '" x1="' + (cx + r1 * Math.cos(rad)).toFixed(1) + '" y1="' + (cy + r1 * Math.sin(rad)).toFixed(1) +
+        '" x2="' + (cx + r2 * Math.cos(rad)).toFixed(1) + '" y2="' + (cy + r2 * Math.sin(rad)).toFixed(1) + '"/>');
+    }
+    for (i = 0; i < 4; i++) {
+      rad = (i * 90 - 90) * Math.PI / 180;
+      var mx = cx + R * Math.cos(rad), my = cy + R * Math.sin(rad);
+      o.push('<g class="d-st"><circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="' + (labels ? 15 : 17) + '"/></g>');
+      if (labels) {
+        var lx = [cx, cx + R + 74, cx, cx - R - 74][i], ly = [cy - R - 28, cy + 8, cy + R + 46, cy + 8][i];
+        o.push('<text class="d-lab" x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '">' + DIAL_LABELS[i] + '</text>');
+      }
+    }
+    var L = R - 36;
+    o.push('<g class="d-needle" style="transform-origin:' + cx + 'px ' + cy + 'px">' +
+      '<path class="d-north" d="M' + cx + ' ' + (cy - L) + ' L' + (cx + 13) + ' ' + cy + ' L' + (cx - 13) + ' ' + cy + ' Z" fill="url(#ng' + uid + ')"/>' +
+      '<path class="d-south" d="M' + cx + ' ' + (cy + L) + ' L' + (cx + 13) + ' ' + cy + ' L' + (cx - 13) + ' ' + cy + ' Z"/>' +
+      '<circle class="d-hub" cx="' + cx + '" cy="' + cy + '" r="10"/><circle class="d-pin" cx="' + cx + '" cy="' + cy + '" r="3.5"/></g>');
+    o.push('</svg>');
+    return o.join('');
+  }
+  function setDial(root, deg, done, nowIdx, instant) {
+    if (!root) return;
+    var nd = root.querySelector('.d-needle');
+    if (nd) {
+      if (instant) { nd.style.transition = 'none'; nd.style.transform = 'rotate(' + deg + 'deg)'; void nd.getBoundingClientRect(); nd.style.transition = ''; }
+      else nd.style.transform = 'rotate(' + deg + 'deg)';
+    }
+    Array.prototype.forEach.call(root.querySelectorAll('.d-st'), function (m, i) {
+      m.classList.toggle('done', i < done); m.classList.toggle('now', i === nowIdx);
+    });
+  }
+  function breakDial(fromDeg, idx) {
+    if (!$('b-medal').firstChild) $('b-medal').innerHTML = dialSVG('b', true);
+    setDial($('b-medal'), fromDeg, idx, idx, true);
+    setTimeout(function () { setDial($('b-medal'), idx * 90, idx, idx); }, 380);
   }
 
   /* ── السؤال ── */
@@ -251,8 +301,9 @@
     $('q-bar').style.width = Math.round(S.qi / n * 100) + '%';
     var pos = 0; for (var k = 0; k < S.si; k++) pos += S.form.stations[k].items.length; pos += S.qi;
     var total = S.form.order.length, left = Math.max(1, Math.ceil((total - pos) * SEC_PER_ITEM / 60));
-    $('q-overall').textContent = 'العبارة ' + ar(pos + 1) + ' من ' + ar(total) + ' · بقي نحو ' + (left === 1 ? 'دقيقة' : left === 2 ? 'دقيقتين' : ar(left) + (left <= 10 ? ' دقائق' : ' دقيقة'));
+    $('q-overall').textContent = 'العبارة ' + ar(pos + 1) + ' من ' + ar(total) + '، بقي نحو ' + (left === 1 ? 'دقيقة' : left === 2 ? 'دقيقتين' : ar(left) + (left <= 10 ? ' دقائق' : ' دقيقة'));
     $('q-overall-bar').style.width = Math.round(pos / total * 100) + '%';
+    var segNow = document.querySelector('#jtrack .seg.now i'); if (segNow) segNow.style.width = Math.round(S.qi / n * 100) + '%';
     var isBarrier = it.scale === 'barrier';
     $('q-meta').hidden = !isBarrier;
     $('q-meta').textContent = isBarrier ? S.bank.barrierStem : '';
@@ -263,7 +314,9 @@
       var val = i + 1;
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'opt'; b.setAttribute('role', 'radio');
-      b.textContent = label;
+      var meter = '';
+      for (var m = 0; m < S.bank.scales[it.scale].length; m++) meter += '<i class="' + (m < val ? 'on' : '') + '" style="height:' + (6 + m * 4) + 'px"></i>';
+      b.innerHTML = '<span class="opt-l">' + esc(label) + '</span><span class="meter" aria-hidden="true">' + meter + '</span>';
       if (prev === val) { b.classList.add('selected'); b.setAttribute('aria-checked', 'true'); }
       else b.setAttribute('aria-checked', 'false');
       b.addEventListener('click', function () { choose(it, val, b); });
@@ -315,7 +368,7 @@
     if (!next) { finish(); return; }
     S.si++; S.qi = 0;
     drawJourney();
-    $('b-medal').innerHTML = medal();
+    breakDial((S.si - 1) * 90, S.si);
     $('b-done').textContent = 'أنهيت «' + done.title + '»';
     $('b-title').textContent = next.station.title;
     $('b-intro').textContent = intro(next.station);
@@ -404,6 +457,9 @@
   }
 
   function renderResults(r) {
+    $('r-dial').innerHTML = dialSVG('r', true);
+    setDial($('r-dial'), 270, 4, -1, true);
+    setTimeout(function () { setDial($('r-dial'), 360, 4, -1); }, 400);
     $('r-hello').textContent = 'شكرا لك';
     $('r-lead').textContent = 'تصف هذه النتيجة وضعك الآن، وقد تتغير كلما عرفت أكثر عن نفسك وعن خياراتك.';
 
