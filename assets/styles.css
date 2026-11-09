@@ -7,12 +7,12 @@
 :root {
   --night: #0f2440;        /* الكحلي الداكن: لوحة البوصلة والعناوين */
   --navy: #24476b;         /* الكحلي الثاني: الأزرار والاختيار */
-  --navy-soft: #e3eaf3;
-  --mist: #eef2f7;         /* خلفية الصفحة */
-  --paper: #ffffff;
+  --navy-soft: #e8e9e6;
+  --mist: #f5eedd;         /* خلفية الصفحة: بيج مصفر دافئ */
+  --paper: #fffcf5;
   --ink: #13233a;
-  --muted: #586a7f;
-  --line: #d9e0e9;
+  --muted: #6a6355;
+  --line: #e6dbc4;
   --sun: #f6b93b;
   --ember: #ee7b1b;
   --ember-ink: #a4520a;
@@ -169,7 +169,7 @@ input[type=text]:focus { border-color: var(--navy); outline: none; }
 .options { display: grid; gap: 10px; }
 .opt { font: inherit; font-size: 16.5px; font-weight: 500; text-align: right; color: var(--ink); background: var(--paper); border: 1.5px solid var(--line); border-radius: var(--r-md);
   padding: 14px 16px; min-height: 58px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: border-color .15s, background .15s; }
-.opt::before { content: ''; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #9aa9bb; flex-shrink: 0; transition: border-color .15s, background .15s, box-shadow .15s; }
+.opt::before { content: ''; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #b9ab8f; flex-shrink: 0; transition: border-color .15s, background .15s, box-shadow .15s; }
 .opt-l { flex: 1; }
 .meter { display: flex; align-items: flex-end; gap: 3px; height: 22px; flex-shrink: 0; }
 .meter i { width: 5px; border-radius: 2px; background: var(--line); }
